@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace KDTree
+﻿namespace KDTree
 {
+    using System;
+    using System.Linq;
 
     /// <summary>
     /// A KDTree class represents the root of a variable-dimension KD-Tree.

@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace KDTree
+﻿namespace KDTree
 {
+    using System;
+    using System.Linq;
+
     /// <summary>
     /// A binary interval heap is double-ended priority queue is a priority queue that it allows
     /// for efficient removal of both the maximum and minimum element.

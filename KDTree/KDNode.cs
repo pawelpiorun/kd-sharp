@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace KDTree
+﻿namespace KDTree
 {
+    using System;
+    using System.Linq;
+
     /// <summary>
     /// A KD-Tree node which supports a generic number of dimensions.  All data items
     /// need the same number of dimensions.

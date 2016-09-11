@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-
-namespace KDTree
+﻿namespace KDTree
 {
+    using System;
+
     /// <summary>
     /// A MinHeap is a smallest-first queue based around a binary heap so it is quick to insert / remove items.
     /// </summary>

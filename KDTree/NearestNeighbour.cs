@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace KDTree
+﻿namespace KDTree
 {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Linq;
+
     /// <summary>
     /// A NearestNeighbour iterator for the KD-tree which intelligently iterates and captures relevant data in the search space.
     /// </summary>
