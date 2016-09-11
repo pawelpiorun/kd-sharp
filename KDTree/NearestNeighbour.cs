@@ -221,7 +221,7 @@ namespace KDTree
         /// <summary>
         /// Return the current value referenced by the iterator.
         /// </summary>
-        T IEnumerator<T>.Current
+        public T Current
         {
             get { return _Current; }
         }
