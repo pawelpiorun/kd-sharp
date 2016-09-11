@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KDTree", "KDTree\KDTree.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KDVisuals", "KDVisuals\KDVisuals.csproj", "{733B51F3-EE33-4AC2-B552-73F554816640}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KDTest", "KDTest\KDTest.csproj", "{35241834-7222-4CC8-B9A8-B9056F48D491}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,6 +20,10 @@ Global
 		{33A00A90-C02E-474B-A8C0-3B0559873EA0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{733B51F3-EE33-4AC2-B552-73F554816640}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{733B51F3-EE33-4AC2-B552-73F554816640}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35241834-7222-4CC8-B9A8-B9056F48D491}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35241834-7222-4CC8-B9A8-B9056F48D491}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35241834-7222-4CC8-B9A8-B9056F48D491}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35241834-7222-4CC8-B9A8-B9056F48D491}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -130,7 +130,7 @@
 
                     // Skip if the point exceeds the threshold.
                     // Technically this should never happen, but be prescise.
-                    if (fThreshold >= 0 && fDistance >= fThreshold)
+                    if (fThreshold >= 0 && fDistance > fThreshold)
                         continue;
 
                     // Add the point if either need more points or it's closer than furthest on list so far.
@@ -159,7 +159,7 @@
                         double fDistance = kDistanceFunction.Distance(pCursor.tPoints[i], tSearchPoint);
 
                         // Skip if it exceeds the threshold.
-                        if (fThreshold >= 0 && fDistance >= fThreshold)
+                        if (fThreshold >= 0 && fDistance > fThreshold)
                             continue;
 
                         // Insert the point if we have more to take.
