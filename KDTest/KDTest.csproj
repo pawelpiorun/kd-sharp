@@ -50,6 +50,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="KDTreeBenchmark.cs" />
     <Compile Include="KDTreeInterface.cs" />
     <Compile Include="KDTreeNearestNeighbour.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

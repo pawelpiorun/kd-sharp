@@ -74,8 +74,8 @@
             this.bSinglePoint = true;
 
             // Setup leaf elements.
-            this.tPoints = new double[iBucketCapacity+1][];
-            this.tData = new T[iBucketCapacity+1];
+            this.tPoints = new double[iBucketCapacity][];
+            this.tData = new T[iBucketCapacity];
         }
         #endregion
 
@@ -136,7 +136,7 @@
             Size++;
 
             // Split if the node is getting too large in terms of data.
-            if (Size == tPoints.Length - 1)
+            if (Size == tPoints.Length)
             {
                 // If the node is getting too physically large.
                 if (CalculateSplit())
@@ -211,7 +211,7 @@
         /// Double the capacity of this leaf.
         /// </summary>
         private void IncreaseLeafCapacity()
-        {   
+        {
             Array.Resize<double[]>(ref tPoints, tPoints.Length * 2);
             Array.Resize<T>(ref tData, tData.Length * 2);
         }
@@ -283,11 +283,11 @@
 
                 // If larger, put it in the right.
                 if (tOldPoint[iSplitDimension] > fSplitValue)
-                    pRight.AddLeafPoint(tOldPoint, kOldData);
+                    pRight.AddPoint(tOldPoint, kOldData);
 
                 // If smaller, put it in the left.
                 else
-                    pLeft.AddLeafPoint(tOldPoint, kOldData);
+                    pLeft.AddPoint(tOldPoint, kOldData);
             }
 
             // Wipe the data from this KDNode.
