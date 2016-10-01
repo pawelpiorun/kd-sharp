@@ -4,6 +4,7 @@
     using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
+    using KDTree.DistanceFunctions;
 
     /// <summary>
     /// A NearestNeighbour iterator for the KD-tree which intelligently iterates and captures relevant data in the search space.
@@ -14,7 +15,7 @@
         /// <summary>The point from which are searching in n-dimensional space.</summary>
         private double[] tSearchPoint;
         /// <summary>A distance function which is used to compare nodes and value positions.</summary>
-        private DistanceFunctions kDistanceFunction;
+        private DistanceFunction kDistanceFunction;
         /// <summary>The tree nodes which have yet to be evaluated.</summary>
         private MinHeap<KDNode<T>> pPending;
         /// <summary>The values which have been evaluated and selected.</summary>
@@ -42,7 +43,7 @@
         /// <param name="kDistance">The distance function used to evaluate the points.</param>
         /// <param name="iMaxPoints">The max number of points which can be returned by this iterator.  Capped to max in tree.</param>
         /// <param name="fThreshold">Threshold to apply to the search space.  Negative numbers indicate that no threshold is applied.</param>
-        public NearestNeighbour(KDNode<T> pRoot, double[] tSearchPoint, DistanceFunctions kDistance, int iMaxPoints, double fThreshold)
+        public NearestNeighbour(KDNode<T> pRoot, double[] tSearchPoint, DistanceFunction kDistance, int iMaxPoints, double fThreshold)
         {
             // Check the dimensionality of the search point.
             if (tSearchPoint.Length != pRoot.iDimensions)
