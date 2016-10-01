@@ -10,18 +10,19 @@
     /// A NearestNeighbour iterator for the KD-tree which intelligently iterates and captures relevant data in the search space.
     /// </summary>
     /// <typeparam name="T">The type of data the iterator should handle.</typeparam>
-    public class NearestNeighbour<T> : IEnumerator<T>, IEnumerable<T>
+    public sealed class NearestNeighbour<T> : IEnumerator<T>, IEnumerable<T>
     {
+        KDTree<T> Tree;
         /// <summary>The point from which are searching in n-dimensional space.</summary>
         private double[] tSearchPoint;
         /// <summary>A distance function which is used to compare nodes and value positions.</summary>
         private DistanceFunction kDistanceFunction;
         /// <summary>The tree nodes which have yet to be evaluated.</summary>
-        private MinHeap<KDNode<T>> pPending;
+        private MinHeap<KDTreeNode> pPending;
         /// <summary>The values which have been evaluated and selected.</summary>
         private IntervalHeap<T> pEvaluated;
         /// <summary>The root of the kd tree to begin searching from.</summary>
-        private KDNode<T> pRoot = null;
+        private KDTreeNode pRoot = null;
 
         /// <summary>The max number of points we can return through this iterator.</summary>
         private int iMaxPointsReturned = 0;
@@ -38,35 +39,37 @@
         /// <summary>
         /// Construct a new nearest neighbour iterator.
         /// </summary>
-        /// <param name="pRoot">The root of the tree to begin searching from.</param>
+        /// <param name="Tree">The tree to begin searching from.</param>
         /// <param name="tSearchPoint">The point in n-dimensional space to search.</param>
         /// <param name="kDistance">The distance function used to evaluate the points.</param>
         /// <param name="iMaxPoints">The max number of points which can be returned by this iterator.  Capped to max in tree.</param>
         /// <param name="fThreshold">Threshold to apply to the search space.  Negative numbers indicate that no threshold is applied.</param>
-        public NearestNeighbour(KDNode<T> pRoot, double[] tSearchPoint, DistanceFunction kDistance, int iMaxPoints, double fThreshold)
+        public NearestNeighbour(KDTree<T> Tree, double[] tSearchPoint, DistanceFunction kDistance, int iMaxPoints, double fThreshold)
         {
             // Check the dimensionality of the search point.
-            if (tSearchPoint.Length != pRoot.iDimensions)
-                throw new Exception("Dimensionality of search point and kd-tree are not the same.");
+            if (tSearchPoint.Length != Tree.Root.Dimensions)
+                throw new ArgumentException("Dimensionality of search point and kd-tree are not the same.", "tSearchPoint");
 
+            // Store the Tree
+            this.Tree = Tree;
+            this.pRoot = this.Tree.Root;
+            
             // Store the search point.
-            this.tSearchPoint = new double[tSearchPoint.Length];
-            Array.Copy(tSearchPoint, this.tSearchPoint, tSearchPoint.Length);
+            this.tSearchPoint = tSearchPoint.ToArray();
 
             // Store the point count, distance function and tree root.
             this.iPointsRemaining = Math.Min(iMaxPoints, pRoot.Size);
             this.fThreshold = fThreshold;
-            this.kDistanceFunction = kDistance;
-            this.pRoot = pRoot;
+            this.kDistanceFunction = kDistance;            
             this.iMaxPointsReturned = iMaxPoints;
-            _CurrentDistance = -1;
+            this._CurrentDistance = -1;
 
             // Create an interval heap for the points we check.
             this.pEvaluated = new IntervalHeap<T>();
 
             // Create a min heap for the things we need to check.
-            this.pPending = new MinHeap<KDNode<T>>();
-            this.pPending.Insert(0, pRoot);
+            this.pPending = new MinHeap<KDTreeNode>();
+            this.pPending.Insert(0, this.pRoot);
         }
 
         /// <summary>
@@ -86,28 +89,28 @@
             while (pPending.Size > 0 && (pEvaluated.Size == 0 || (pPending.MinKey < pEvaluated.MinKey)))
             {
                 // If there are pending paths possibly closer than the nearest evaluated point, check it out
-                KDNode<T> pCursor = pPending.Min;
+                var pCursor = pPending.Min;
                 pPending.RemoveMin();
 
                 // Descend the tree, recording paths not taken
                 while (!pCursor.IsLeaf)
                 {
-                    KDNode<T> pNotTaken;
+                    KDTreeNode pNotTaken;
 
                     // If the seach point is larger, select the right path.
-                    if (tSearchPoint[pCursor.iSplitDimension] > pCursor.fSplitValue)
+                    if (tSearchPoint[pCursor.SplitDimension] > pCursor.SplitValue)
                     {
-                        pNotTaken = pCursor.pLeft;
-                        pCursor = pCursor.pRight;
+                        pNotTaken = pCursor.Left;
+                        pCursor = pCursor.Right;
                     }
                     else
                     {
-                        pNotTaken = pCursor.pRight;
-                        pCursor = pCursor.pLeft;
+                        pNotTaken = pCursor.Right;
+                        pCursor = pCursor.Left;
                     }
 
                     // Calculate the shortest distance between the search point and the min and max bounds of the kd-node.
-                    double fDistance = kDistanceFunction.DistanceToRectangle(tSearchPoint, pNotTaken.tMinBound, pNotTaken.tMaxBound);
+                    double fDistance = kDistanceFunction.DistanceToRectangle(tSearchPoint, pNotTaken.MinBound, pNotTaken.MaxBound);
 
                     // If it is greater than the threshold, skip.
                     if (fThreshold >= 0 && fDistance > fThreshold)
@@ -124,10 +127,10 @@
                 }
 
                 // If all the points in this KD node are in one place.
-                if (pCursor.bSinglePoint)
+                if (pCursor.SinglePoint)
                 {
                     // Work out the distance between this point and the search point.
-                    double fDistance = kDistanceFunction.Distance(pCursor.tPoints[0], tSearchPoint);
+                    double fDistance = kDistanceFunction.Distance(pCursor.Points[0], tSearchPoint);
 
                     // Skip if the point exceeds the threshold.
                     // Technically this should never happen, but be prescise.
@@ -141,11 +144,11 @@
                         {
                             // If we don't need any more, replace max
                             if (pEvaluated.Size == iPointsRemaining)
-                                pEvaluated.ReplaceMax(fDistance, pCursor.tData[i]);
+                                pEvaluated.ReplaceMax(fDistance, Tree[pCursor.Data[i]]);
 
                             // Otherwise insert.
                             else
-                                pEvaluated.Insert(fDistance, pCursor.tData[i]);
+                                pEvaluated.Insert(fDistance, Tree[pCursor.Data[i]]);
                         }
                     }
                 }
@@ -157,7 +160,7 @@
                     for (int i = 0; i < pCursor.Size; ++i)
                     {
                         // Compute the distance between the points.
-                        double fDistance = kDistanceFunction.Distance(pCursor.tPoints[i], tSearchPoint);
+                        double fDistance = kDistanceFunction.Distance(pCursor.Points[i], tSearchPoint);
 
                         // Skip if it exceeds the threshold.
                         if (fThreshold >= 0 && fDistance > fThreshold)
@@ -165,11 +168,11 @@
 
                         // Insert the point if we have more to take.
                         if (pEvaluated.Size < iPointsRemaining)
-                            pEvaluated.Insert(fDistance, pCursor.tData[i]);
+                            pEvaluated.Insert(fDistance, Tree[pCursor.Data[i]]);
 
                         // Otherwise replace the max.
                         else if (fDistance < pEvaluated.MaxKey)
-                            pEvaluated.ReplaceMax(fDistance, pCursor.tData[i]);
+                            pEvaluated.ReplaceMax(fDistance, Tree[pCursor.Data[i]]);
                     }
                 }
             }
@@ -198,7 +201,7 @@
             this.pEvaluated = new IntervalHeap<T>();
 
             // Create a min heap for the things we need to check.
-            this.pPending = new MinHeap<KDNode<T>>();
+            this.pPending = new MinHeap<KDTreeNode>();
             this.pPending.Insert(0, pRoot);
         }
 

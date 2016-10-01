@@ -59,8 +59,8 @@
     <Compile Include="DistanceFunctions\SquaredEuclideanDistanceFunction.cs" />
     <Compile Include="DistanceFunctions\SquaredEuclideanDistanceWithTranslation.cs" />
     <Compile Include="IntervalHeap.cs" />
-    <Compile Include="KDNode.cs" />
     <Compile Include="KDTree.cs" />
+    <Compile Include="KDTreeNode.cs" />
     <Compile Include="MinHeap.cs" />
     <Compile Include="NearestNeighbour.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

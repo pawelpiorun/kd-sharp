@@ -43,9 +43,7 @@
         [Test]
         public void InstantiateKDTree_NoBucketCapacity()
         {
-            var tree = new KDTree<int>(1, 0);
-            
-            Assert.IsNotNull(tree);
+            Assert.Throws(typeof(ArgumentOutOfRangeException), () => new KDTree<int>(1, 0));
         }
         
         [Test]
