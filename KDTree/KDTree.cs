@@ -1,6 +1,7 @@
 ﻿namespace KDTree
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using KDTree.DistanceFunctions;
 
@@ -9,7 +10,7 @@
     /// </summary>
     /// <typeparam name="T">The generic data type we want this tree to contain.</typeparam>
     /// <remarks>This is based on this: https://bitbucket.org/rednaxela/knn-benchmark/src/tip/ags/utils/dataStructures/trees/thirdGenKD/ </remarks>
-    public class KDTree<T>
+    public class KDTree<T> : ICollection<T>
     {
         /// <summary>
         /// Constant Default Bucket Capacity.
@@ -30,6 +31,16 @@
         /// Next Index to Insert Object.
         /// </summary>
         int NextIndex;
+        
+        /// <summary>
+        /// Available Indices for Data Array Holes
+        /// </summary>
+        Stack<int> AvailableIndexes;
+        
+        /// <summary>
+        /// Valid Indexes Only
+        /// </summary>
+        IEnumerable<int> ValidIndexes { get { return Enumerable.Range(0, NextIndex).Except(AvailableIndexes); } }
         
         /// <summary>
         /// Tree Root Node.
@@ -77,6 +88,7 @@
             this.Data = new T[iBucketCapacity];
             this.Root = new KDTreeNode(iDimensions, iBucketCapacity);
             this.NextIndex = 0;
+            this.AvailableIndexes = new Stack<int>();
         }
 
         #region Tree Methods
@@ -87,12 +99,81 @@
         /// <param name="Value">Object to Add.</param>
         public void AddPoint(double[] Point, T Value)
         {
-            if (NextIndex >= Data.Length)
-                ResizeData();
+            // Check if Data Array have Hole
+            if (AvailableIndexes.Count > 0)
+            {
+                var index = AvailableIndexes.Pop();
+                Root.AddPoint(Point, index);
+                Data[index] = Value;
+            }
+            else
+            {
+                if (NextIndex >= Data.Length)
+                    ResizeData();
+                
+                var index = NextIndex++;
+                Root.AddPoint(Point, index);
+                Data[index] = Value;
+            }
+        }
+        
+        /// <summary>
+        /// Remove Object From Tree.
+        /// </summary>
+        /// <param name="Value">Object to Remove.</param>
+        /// <returns>true if Object is found.</returns>
+        public bool RemovePoint(T Value)
+        {
+            var result = false;
+            foreach(var index in ValidIndexes.Where(valid => Value.Equals(Data[valid])))
+            {
+                result = Root.RemovePoint(index);
+                
+                // Remove index from valid Indexes
+                if (index == NextIndex - 1)
+                    --NextIndex;
+                else
+                    AvailableIndexes.Push(index);
+                
+                break;
+            }
             
-            Root.AddPoint(Point, NextIndex);
-            Data[NextIndex] = Value;
-            NextIndex++;
+            return result;
+        }
+        
+        /// <summary>
+        /// Move Point in tree to a new Position.
+        /// </summary>
+        /// <param name="Point">New Position to be Moved to.</param>
+        /// <param name="Value">Object to Move.</param>
+        /// <returns>true if Object is found.</returns>
+        public bool MovePoint(double[] Point, T Value)
+        {
+            var result = false; 
+            foreach(var index in ValidIndexes.Where(valid => Value.Equals(Data[valid])))
+            {
+                result = Root.MovePoint(Point, index);
+                break;
+            }
+            
+            return result;
+        }
+        
+        /// <summary>
+        /// Get Point Poisition.
+        /// </summary>
+        /// <param name="Value">Object to Get Position From.</param>
+        /// <returns>Position Point or null if not found.</returns>
+        public double[] GetPoint(T Value)
+        {
+            foreach(var index in ValidIndexes.Where(valid => Value.Equals(Data[valid])))
+            {
+                KDTreeNode node;
+                var foundIndex = Root.GetPointNode(index, out node);
+                return node.Points[foundIndex];
+            }
+            
+            return null;
         }
         #endregion
         
@@ -104,7 +185,43 @@
         {
             Array.Resize<T>(ref Data, Data.Length * 2);
         }
+        
+        /// <summary>
+        /// Clear the whole Tree.
+        /// </summary>
+        void ClearTree()
+        {
+            Root.Clear();
+            Data = new T[Root.BucketCapacity];
+            NextIndex = 0;
+            AvailableIndexes = new Stack<int>();
+        }
         #endregion
+        
+        #region ICollection Implementation
+        public int Count { get { return Size; } }
+        public bool IsReadOnly { get { return false; } }
+        public void Add(T item) { throw new NotImplementedException(); }
+        public void Add(double[] point, T item) { AddPoint(point, item); }
+        public void Clear() { ClearTree(); }
+        public bool Contains(T item) { throw new NotImplementedException(); }
+        public void CopyTo(T[] array, int arrayIndex) { throw new NotImplementedException(); }
+        public bool Remove(T item) { return RemovePoint(item); }
+        #endregion
+        
+        #region Enumerable Implementation
+        public IEnumerator<T> GetEnumerator()
+        {
+            return ValidIndexes.Select(index => Data[index]).GetEnumerator();
+        }
+        
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+        #endregion
+        
+        #region Nearest Neighbour
         /// <summary>
         /// Get the nearest neighbours to a point in the kd tree using a square euclidean distance function.
         /// </summary>
@@ -129,5 +246,6 @@
         {
             return new NearestNeighbour<T>(this, tSearchPoint, kDistanceFunction, iMaxReturned, fDistance);
         }
+        #endregion
     }
 }

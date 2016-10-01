@@ -1,6 +1,7 @@
 ﻿namespace KDTest
 {
     using System;
+    using System.Linq;
     using NUnit.Framework;
     using KDTree;
     
@@ -56,8 +57,116 @@
         
         #endregion
         
+        #region Iteration
+        [Test]
+        public void KDTree_NoElements_CollectionEmpty()
+        {
+            var tree = new KDTree<int>(1);
+            
+            CollectionAssert.IsEmpty(tree);
+        }
+        
+        [Test]
+        public void KDTree_TenElements_CollectionEquivalent()
+        {
+            var tree = new KDTree<int>(3, 8);
+            
+            var collection = new Tuple<double[], int>[] {
+                new Tuple<double[], int>(new [] { 0.0, 0.0, 0.0 }, 1),
+                new Tuple<double[], int>(new [] { 1.0, 1.0, 1.0 }, 2),
+                new Tuple<double[], int>(new [] { 2.0, 2.0, 2.0 }, 3),
+                new Tuple<double[], int>(new [] { 3.0, 3.0, 3.0 }, 4),
+                new Tuple<double[], int>(new [] { 4.0, 4.0, 4.0 }, 5),
+                new Tuple<double[], int>(new [] { 5.0, 5.0, 5.0 }, 6),
+                new Tuple<double[], int>(new [] { 6.0, 6.0, 6.0 }, 7),
+                new Tuple<double[], int>(new [] { 7.0, 7.0, 7.0 }, 8),
+                new Tuple<double[], int>(new [] { 8.0, 8.0, 8.0 }, 9),
+                new Tuple<double[], int>(new [] { 9.0, 9.0, 9.0 }, 10),
+            };
+            
+            foreach (var item in collection)
+            {
+                tree.Add(item.Item1, item.Item2);
+            }
+            
+            CollectionAssert.AreEquivalent(collection.Select(obj => obj.Item2), tree);
+        }
+        
+        [Test]
+        public void KDTree_RemoveElements_CollectionEquivalent()
+        {
+            var tree = new KDTree<int>(3, 2);
+            
+            var collection = new Tuple<double[], int>[] {
+                new Tuple<double[], int>(new [] { 0.0, 0.0, 0.0 }, 1),
+                new Tuple<double[], int>(new [] { 1.0, 1.0, 1.0 }, 2),
+                new Tuple<double[], int>(new [] { 2.0, 2.0, 2.0 }, 3),
+                new Tuple<double[], int>(new [] { 3.0, 3.0, 3.0 }, 4),
+                new Tuple<double[], int>(new [] { 4.0, 4.0, 4.0 }, 5),
+                new Tuple<double[], int>(new [] { 5.0, 5.0, 5.0 }, 6),
+                new Tuple<double[], int>(new [] { 6.0, 6.0, 6.0 }, 7),
+                new Tuple<double[], int>(new [] { 7.0, 7.0, 7.0 }, 8),
+                new Tuple<double[], int>(new [] { 8.0, 8.0, 8.0 }, 9),
+                new Tuple<double[], int>(new [] { 9.0, 9.0, 9.0 }, 10),
+            };
+            
+            foreach (var item in collection)
+            {
+                tree.Add(item.Item1, item.Item2);
+            }
+            
+            foreach (var idx in Enumerable.Range(3, 4))
+            {
+                tree.Remove(idx);
+            }
+            
+            CollectionAssert.AreEquivalent(collection.Select(obj => obj.Item2).Except(Enumerable.Range(3, 4)), tree);
+        }
+        
+        [Test]
+        public void KDTree_RemoveAddElements_CollectionEquivalent()
+        {
+            var tree = new KDTree<int>(3, 2);
+            
+            var collection = new Tuple<double[], int>[] {
+                new Tuple<double[], int>(new [] { 0.0, 0.0, 0.0 }, 1),
+                new Tuple<double[], int>(new [] { 1.0, 1.0, 1.0 }, 2),
+                new Tuple<double[], int>(new [] { 2.0, 2.0, 2.0 }, 3),
+                new Tuple<double[], int>(new [] { 3.0, 3.0, 3.0 }, 4),
+                new Tuple<double[], int>(new [] { 4.0, 4.0, 4.0 }, 5),
+                new Tuple<double[], int>(new [] { 5.0, 5.0, 5.0 }, 6),
+                new Tuple<double[], int>(new [] { 6.0, 6.0, 6.0 }, 7),
+                new Tuple<double[], int>(new [] { 7.0, 7.0, 7.0 }, 8),
+                new Tuple<double[], int>(new [] { 8.0, 8.0, 8.0 }, 9),
+                new Tuple<double[], int>(new [] { 9.0, 9.0, 9.0 }, 10),
+            };
+            
+            foreach (var item in collection)
+            {
+                tree.Add(item.Item1, item.Item2);
+            }
+            
+            foreach (var idx in Enumerable.Range(3, 4))
+            {
+                tree.Remove(idx);
+            }
+            
+            var collection2 = new Tuple<double[], int>[] {
+                new Tuple<double[], int>(new [] { 10.0, 10.0, 10.0 }, 11),
+                new Tuple<double[], int>(new [] { 11.0, 11.0, 11.0 }, 12),
+                new Tuple<double[], int>(new [] { 12.0, 12.0, 12.0 }, 13),
+            };
+            
+            foreach (var item in collection2)
+            {
+                tree.Add(item.Item1, item.Item2);
+            }
+            
+            CollectionAssert.AreEquivalent(collection.Concat(collection2).Select(obj => obj.Item2).Except(Enumerable.Range(3, 4)), tree);
+        }
+        #endregion
+        
         #region Element Add
-
         [Test]
         public void AddKDTreeElement_OneElementSize()
         {
@@ -78,7 +187,122 @@
             
             Assert.AreEqual(10, tree.Size);
         }
+        #endregion
         
+        #region Element Remove
+        [Test]
+        public void RemoveElement_EmptyTree_NotRemoved()
+        {
+            var tree = new KDTree<int>(1, 2);
+            
+            Assert.IsFalse(tree.Remove(1));
+        }
+        
+        [Test]
+        public void RemoveElement_OneElement_Removed()
+        {
+            var tree = new KDTree<int>(1, 2);
+            
+            tree.AddPoint(new [] { 0.0 }, 1);
+            
+            Assert.IsTrue(tree.Remove(1));
+        }
+        
+        [Test]
+        public void RemoveElement_OneElement_NotRemoved()
+        {
+            var tree = new KDTree<int>(1, 2);
+            
+            tree.AddPoint(new [] { 0.0 }, 1);
+            
+            Assert.IsFalse(tree.Remove(2));
+        }
+        
+        [Test]
+        public void RemoveElement_TenElement_Removed()
+        {
+            var tree = new KDTree<int>(3, 2);
+            
+            for (int i = 0 ; i < 10 ; i++)
+                tree.AddPoint(new [] { 0.0, 0.0, 0.0 }, 0);
+            
+            tree.Remove(0);
+            
+            Assert.AreEqual(9, tree.Size);
+        }
+        
+        [Test]
+        public void RemoveElement_TenElement_NotRemoved()
+        {
+            var tree = new KDTree<int>(3, 2);
+            
+            for (int i = 0 ; i < 10 ; i++)
+                tree.AddPoint(new [] { 0.0, 0.0, 0.0 }, 0);
+            
+            tree.Remove(1);
+            
+            Assert.AreEqual(10, tree.Size);
+        }
+        #endregion
+        
+        #region Element Move
+        [Test]
+        public void MoveElement_EmptyTree_NotMoved()
+        {
+            var tree = new KDTree<int>(1, 2);
+            
+            Assert.IsFalse(tree.MovePoint(new [] { 0.0 }, 1));
+        }
+        
+        [Test]
+        public void MoveElement_OneEntry_Moved()
+        {
+            var tree = new KDTree<int>(1, 2);
+            
+            tree.Add(new [] { 0.0 }, 1);
+            
+            Assert.IsTrue(tree.MovePoint(new [] { 1.0 }, 1));
+        }
+        
+        [Test]
+        public void MoveElement_OneEntry_AtPosition()
+        {
+            var tree = new KDTree<int>(1, 2);
+            
+            tree.Add(new [] { 0.0 }, 1);
+            
+            tree.MovePoint(new [] { 1.0 }, 1);
+            
+            CollectionAssert.AreEquivalent(new [] { 1.0 }, tree.GetPoint(1));
+        }
+        
+        [Test]
+        public void MoveElement_OneEntry_NotMoved()
+        {
+            var tree = new KDTree<int>(1, 2);
+            
+            tree.Add(new [] { 0.0 }, 1);
+            
+            Assert.IsFalse(tree.MovePoint(new [] { 1.0 }, 2));
+        }
+        
+        [Test]
+        public void MoveElements_ManyEntry_AtPositions()
+        {
+            var tree = new KDTree<int>(3, 2);
+            
+            for (int i = 0 ; i < 10 ; i++)
+                tree.AddPoint(new [] { 0.0, 0.0, 0.0 }, 0);
+            
+            tree.AddPoint(new [] { 2.0, 2.0, 2.0 }, 3);
+            
+            for (int i = 0 ; i < 10 ; i++)
+                tree.AddPoint(new [] { 0.0, 0.0, 0.0 }, 0);
+            
+            tree.MovePoint(new [] { 3.0, 3.0, 3.0 }, 3);
+            
+            CollectionAssert.AreEquivalent(new [] { 3.0, 3.0, 3.0 }, tree.GetPoint(3));
+        }
         #endregion
     }
 }

@@ -1,6 +1,7 @@
 ﻿namespace KDTree
 {
     using System;
+    using System.Collections.Generic;
     
     /// <summary>
     /// A KD-Tree node which supports a generic number of dimensions.
@@ -35,7 +36,7 @@
         /// <summary>
         /// Initial Bucket Capacity
         /// </summary>
-        readonly int BucketCapacity;
+        public readonly int BucketCapacity;
         /// <summary>
         /// Number of Dimensions
         /// </summary>
@@ -108,6 +109,143 @@
             pCursor.AddLeafPoint(Point, Index);
         }
         
+        /// <summary>
+        /// Remove a Point from this Node.
+        /// </summary>
+        /// <param name="Index">The Data Index to Remove.</param>
+        /// <returns>true if Index found and removed.</returns>
+        internal bool RemovePoint(int Index)
+        {
+            KDTreeNode node;
+            var foundIndex = GetPointNode(Index, out node);
+            
+            if (foundIndex > -1)
+            {
+                // Shift Array Left
+                Array.Copy(node.Data, foundIndex+1, node.Data, foundIndex, node.Size-(foundIndex+1));
+                DecrementSizeFrom(node);
+                return true;
+            }
+
+            return false;
+        }
+        
+        /// <summary>
+        /// Move a Point from this Node.
+        /// </summary>
+        /// <param name="Point">The New Point Position.</param>
+        /// <param name="Index">Index to Search for Moving.</param>
+        /// <returns>true if Index found and moved.</returns>
+        internal bool MovePoint(double[] Point, int Index)
+        {
+            // Find the correct leaf node.
+            var pCursor = this;
+            while (!pCursor.IsLeaf)
+            {
+                // Extend the size of the leaf.
+                pCursor.ExtendBounds(Point);
+                // Increment Size.
+                ++pCursor.Size;
+
+                pCursor = Point[pCursor.SplitDimension] > pCursor.SplitValue ? pCursor.Right : pCursor.Left;
+            }
+
+            var foundIndex = Array.IndexOf(pCursor.Data, Index);
+            
+            // Found in the same bounds as before, change Existing Point.
+            if (foundIndex > -1)
+            {
+                Array.Copy(Point, pCursor.Points[foundIndex], Point.Length);
+                return true;
+            }
+            
+            // Could not be moved, Remove and ReInsert...
+            if (RemovePoint(Index))
+            {
+                AddPoint(Point, Index);
+                return true;
+            }
+            
+            return false;
+        }
+        
+        /// <summary>
+        /// Get the KDTreeNode containing this Data Index and its index.
+        /// </summary>
+        /// <param name="Index">Data Index to search.</param>
+        /// <param name="Node">Node Where Index is found.</param>
+        /// <returns>Index inside Node Data or Null if not found.</returns>
+        internal int GetPointNode(int Index, out KDTreeNode Node)
+        {
+            var nodes = new Stack<KDTreeNode>();
+            nodes.Push(this);
+            
+            // Find Index in Whole Tree.
+            while (nodes.Count > 0)
+            {
+                var currentNode = nodes.Pop();
+                
+                if (currentNode.IsLeaf)
+                {
+                    for (int i = 0 ; i < currentNode.Size ; ++i)
+                    {
+                        if (currentNode.Data[i] == Index)
+                        {
+                            Node = currentNode;
+                            return i;
+                        }
+                    }
+                }
+                else
+                {
+                    nodes.Push(currentNode.Right);
+                    nodes.Push(currentNode.Left);
+                }
+            }
+            
+            Node = null;
+            return -1;
+        }
+        /// <summary>
+        /// Decrement Data Size from this Node.
+        /// </summary>
+        /// <param name="Node">The target Node to reach for Decrement.</param>
+        void DecrementSizeFrom(KDTreeNode Node)
+        {
+            var pCursor = this;
+            // Decrement while Walking to the Node.
+            while (!pCursor.IsLeaf)
+            {
+                --pCursor.Size;
+                pCursor = Node.MaxBound[pCursor.SplitDimension] > pCursor.SplitValue ? pCursor.Right : pCursor.Left;
+            }
+            
+            if (pCursor != Node)
+                throw new InvalidOperationException("Wrong Path in Tree when Decrementing Size!");
+            
+            --Node.Size;
+        }
+                
+        /// <summary>
+        /// Empty Tree.
+        /// </summary>
+        internal void Clear()
+        {
+            Size = 0;
+            SinglePoint = true;
+
+            Points = new double[BucketCapacity][];
+            Data = new int[BucketCapacity];
+            
+            Right = null;
+            Left = null;
+            
+            SplitDimension = 0;
+            SplitValue = 0;
+            
+            MinBound = null;
+            MaxBound = null;
+        }
         #endregion 
         
         #region Insides
