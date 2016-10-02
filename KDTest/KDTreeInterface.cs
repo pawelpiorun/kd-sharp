@@ -86,7 +86,7 @@
             
             foreach (var item in collection)
             {
-                tree.Add(item.Item1, item.Item2);
+                tree.AddPoint(item.Item1, item.Item2);
             }
             
             CollectionAssert.AreEquivalent(collection.Select(obj => obj.Item2), tree);
@@ -112,7 +112,7 @@
             
             foreach (var item in collection)
             {
-                tree.Add(item.Item1, item.Item2);
+                tree.AddPoint(item.Item1, item.Item2);
             }
             
             foreach (var idx in Enumerable.Range(3, 4))
@@ -143,7 +143,7 @@
             
             foreach (var item in collection)
             {
-                tree.Add(item.Item1, item.Item2);
+                tree.AddPoint(item.Item1, item.Item2);
             }
             
             foreach (var idx in Enumerable.Range(3, 4))
@@ -159,7 +159,7 @@
             
             foreach (var item in collection2)
             {
-                tree.Add(item.Item1, item.Item2);
+                tree.AddPoint(item.Item1, item.Item2);
             }
             
             CollectionAssert.AreEquivalent(collection.Concat(collection2).Select(obj => obj.Item2).Except(Enumerable.Range(3, 4)), tree);
@@ -259,7 +259,7 @@
         {
             var tree = new KDTree<int>(1, 2);
             
-            tree.Add(new [] { 0.0 }, 1);
+            tree.AddPoint(new [] { 0.0 }, 1);
             
             Assert.IsTrue(tree.MovePoint(new [] { 1.0 }, 1));
         }
@@ -269,7 +269,7 @@
         {
             var tree = new KDTree<int>(1, 2);
             
-            tree.Add(new [] { 0.0 }, 1);
+            tree.AddPoint(new [] { 0.0 }, 1);
             
             tree.MovePoint(new [] { 1.0 }, 1);
             
@@ -281,7 +281,7 @@
         {
             var tree = new KDTree<int>(1, 2);
             
-            tree.Add(new [] { 0.0 }, 1);
+            tree.AddPoint(new [] { 0.0 }, 1);
             
             Assert.IsFalse(tree.MovePoint(new [] { 1.0 }, 2));
         }

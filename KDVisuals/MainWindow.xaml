@@ -14,11 +14,13 @@
             <Label Foreground="Gray">pixels on mouse move.</Label>
         </StackPanel>
 
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0 0 0 5">
             <Label Foreground="Gray">Number of points:</Label>
             <TextBox Name="txtPoints" Width="100">100</TextBox>
-            <Separator/>
+            <Label Foreground="Gray">|</Label>
             <Button Width="100" Click="Button_Click">Randomise</Button>
+            <Label Foreground="Gray">| Randomise Move</Label>
+            <Button Width="100" Click="Move_Click">Move</Button>
         </StackPanel>
 
 

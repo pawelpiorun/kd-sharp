@@ -58,6 +58,11 @@
         public int Size { get { return Root.Size; } }
         
         /// <summary>
+        /// Retrieve the Tree Dimension Count
+        /// </summary>
+        public int Dimensions { get { return Root.Dimensions; } }
+        
+        /// <summary>
         /// Create a new KD-Tree given a number of dimensions.
         /// </summary>
         /// <param name="iDimensions">The number of data sorting dimensions. i.e. 3 for a 3D point.</param>
@@ -79,7 +84,7 @@
         /// <summary>
         /// Create a new instance of <see cref="KDTree{T}"/> given a number of dimensions, an initial bucket capacity and a <see cref="DistanceFunctions.DistanceFunction"/>.
         /// </summary>
-        /// <param name="DistanceFunction"></param>
+        /// <param name="DistanceFunction">The Default Distance Function to use for NearestNeighbours.</param>
         /// <param name="iDimensions">The number of data sorting dimensions. i.e. 3 for a 3D point.</param>
         /// <param name="iBucketCapacity">The default number of items that can be stored in each node.</param>
         public KDTree(DistanceFunction DistanceFunction, int iDimensions, int iBucketCapacity)
@@ -91,6 +96,16 @@
             this.AvailableIndexes = new Stack<int>();
         }
 
+        /// <summary>
+        /// Create a new instance of <see cref="KDTree{T}"/> given a number of dimensions and a <see cref="DistanceFunctions.DistanceFunction"/>.
+        /// </summary>
+        /// <param name="DistanceFunction">The Default Distance Function to use for NearestNeighbours.</param>
+        /// <param name="iDimensions">The number of data sorting dimensions. i.e. 3 for a 3D point.</param>
+        public KDTree(DistanceFunction DistanceFunction, int iDimensions)
+            : this(DistanceFunction, iDimensions, DEFAULT_BUCKET_CAPACITY)
+        {
+        }
+
         #region Tree Methods
         /// <summary>
         /// Add Object with Point Position in Tree.
@@ -99,6 +114,9 @@
         /// <param name="Value">Object to Add.</param>
         public void AddPoint(double[] Point, T Value)
         {
+            if (Point.Length != Root.Dimensions)
+                throw new ArgumentException("Point should have same lenght as Tree Dimensions ("+Root.Dimensions+")...", "Point");
+            
             // Check if Data Array have Hole
             if (AvailableIndexes.Count > 0)
             {
@@ -149,7 +167,10 @@
         /// <returns>true if Object is found.</returns>
         public bool MovePoint(double[] Point, T Value)
         {
-            var result = false; 
+            if (Point.Length != Root.Dimensions)
+                throw new ArgumentException("Point should have same lenght as Tree Dimensions ("+Root.Dimensions+")...", "Point");
+
+            var result = false;
             foreach(var index in ValidIndexes.Where(valid => Value.Equals(Data[valid])))
             {
                 result = Root.MovePoint(Point, index);
@@ -202,10 +223,13 @@
         public int Count { get { return Size; } }
         public bool IsReadOnly { get { return false; } }
         public void Add(T item) { throw new NotImplementedException(); }
-        public void Add(double[] point, T item) { AddPoint(point, item); }
         public void Clear() { ClearTree(); }
         public bool Contains(T item) { throw new NotImplementedException(); }
-        public void CopyTo(T[] array, int arrayIndex) { throw new NotImplementedException(); }
+        public void CopyTo(T[] array, int arrayIndex)
+        {
+            foreach (var idx in ValidIndexes)
+                array[arrayIndex++] = Data[idx];
+        }
         public bool Remove(T item) { return RemovePoint(item); }
         #endregion
         
