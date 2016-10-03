@@ -10,7 +10,7 @@
     /// </summary>
     /// <typeparam name="T">The generic data type we want this tree to contain.</typeparam>
     /// <remarks>This is based on this: https://bitbucket.org/rednaxela/knn-benchmark/src/tip/ags/utils/dataStructures/trees/thirdGenKD/ </remarks>
-    public class KDTree<T> : ICollection<T>, IList<T>
+    public class KDTree<T> : IList<T>
     {
         /// <summary>
         /// Constant Default Bucket Capacity.
@@ -41,7 +41,7 @@
         /// Available Indices for Data Array Holes
         /// </summary>
         SortedList<int, int> AvailableIndices;
-                
+        
         /// <summary>
         /// Tree Root Node.
         /// </summary>
@@ -52,6 +52,11 @@
         /// </summary>
         public int Dimensions { get { return Root.Dimensions; } }
         
+        /// <summary>
+        /// Count of Element Removed From Nodes, High number can lead to Unbalanced Tree
+        /// </summary>
+        public uint RemovalCount { get; private set; }
+                
         /// <summary>
         /// Create a new KD-Tree given a number of dimensions.
         /// </summary>
@@ -106,29 +111,32 @@
         public void AddPoint(double[] Point, T Value)
         {
             if (Point.Length != Dimensions)
-            	throw new ArgumentException(string.Format("Point should have same lenght as Tree Dimensions ({0})...", Dimensions), "Point");
+                throw new ArgumentException(string.Format("Point should have same lenght as Tree Dimensions ({0})...", Dimensions), "Point");
+            
+            var point = new double[Point.Length];
+            Array.Copy(Point, point, Point.Length);
             
             // Check if Data Array have Holes
             if (AvailableIndices.Count > 0)
             {
-            	var last = AvailableIndices.Count - 1;
-            	var index = AvailableIndices.Values[last];
-            	
-	            Data[index] = Value;
-	            Points[index] = Point;
-	            Root.AddPoint(index, Points);
-				AvailableIndices.RemoveAt(last);
+                var last = AvailableIndices.Count - 1;
+                var index = AvailableIndices.Values[last];
+                
+                Data[index] = Value;
+                Points[index] = point;
+                Root.AddPoint(index, Points);
+                AvailableIndices.RemoveAt(last);
             }
             else
             {
-            	var index = DataSize;
-            	if (index >= Data.Length)
-	                ResizeData();
-            	
-	            Data[index] = Value;
-	            Points[index] = Point;
-	            Root.AddPoint(index, Points);
-            	++DataSize;
+                var index = DataSize;
+                if (index >= Data.Length)
+                    ResizeData();
+                
+                Data[index] = Value;
+                Points[index] = point;
+                Root.AddPoint(index, Points);
+                ++DataSize;
             }
         }
         
@@ -139,15 +147,15 @@
         /// <returns>true if Object is found.</returns>
         public bool Remove(T Value)
         {
-        	var idx = IndexOf(Value);
-        	
-        	if (idx > -1)
-        	{
-        		RemoveAt(idx);
-        		return true;
-        	}
-        	
-        	return false;
+            var idx = IndexOf(Value);
+            
+            if (idx > -1)
+            {
+                RemoveAt(idx);
+                return true;
+            }
+            
+            return false;
         }
         
         /// <summary>
@@ -159,16 +167,18 @@
         public bool MovePoint(double[] Point, T Value)
         {
             if (Point.Length != Dimensions)
-            	throw new ArgumentException(string.Format("Point should have same length as Tree Dimensions ({0})...", Dimensions), "Point");
+                throw new ArgumentException(string.Format("Point should have same length as Tree Dimensions ({0})...", Dimensions), "Point");
 
             var idx = IndexOf(Value);
             
             if (idx > -1)
             {
-            	var oldPoint = Points[idx];
-            	Array.Copy(Point, Points[idx], Point.Length);
-            	Root.MovePoint(oldPoint, idx, Points);
-            	return true;
+                var oldPoint = new double[Point.Length];
+                Array.Copy(Points[idx], oldPoint, Point.Length);
+                Array.Copy(Point, Points[idx], Point.Length);
+                if (!Root.MovePoint(oldPoint, idx, Points))
+                    ++RemovalCount;
+                return true;
             }
             
             return false;
@@ -181,8 +191,15 @@
         /// <returns>Position Point or null if not found.</returns>
         public double[] GetPoint(T Value)
         {
-        	var idx = IndexOf(Value);
-        	return idx > -1 ? Points[idx] : null;
+            var idx = IndexOf(Value);
+            if (idx > -1)
+            {
+                var result = new double[Dimensions];
+                Array.Copy(Points[idx], result, Dimensions);
+                return result;
+            }
+            
+            return null;
         }
         
         /// <summary>
@@ -192,10 +209,37 @@
         /// <returns>Position Point.</returns>
         public double[] GetPointAt(int Index)
         {
-        	if (Index < 0 || Index >= DataSize || AvailableIndices.ContainsValue(Index))
-        		throw new IndexOutOfRangeException(string.Format("Given Index ({0}) is not valued", Index));
-        	
-        	return Points[Index];
+            if (Index < 0 || Index >= DataSize || AvailableIndices.ContainsValue(Index))
+                throw new IndexOutOfRangeException(string.Format("Given Index ({0}) is not valued", Index));
+            
+            var result = new double[Dimensions];
+            Array.Copy(Points[Index], result, Dimensions);
+            return result;
+        }
+        
+        /// <summary>
+        /// Regenerate Tree from Current Collection.
+        /// Can Solve Unbalancing when moving Data between nodes.
+        /// </summary>
+        public void Regen()
+        {
+            Root.Clear();
+            RemovalCount = 0;
+            
+            var hole = 0;
+            for (int i = AvailableIndices.Count - 1 ; i > -1 ; --i)
+            {
+                var nextHole = AvailableIndices.Values[i];
+                
+                while (hole < nextHole)
+                    Root.AddPoint(hole++, Points);
+                
+                ++hole;
+            }
+            
+            while (hole < DataSize)
+                Root.AddPoint(hole++, Points);
+            
         }
         #endregion
         
@@ -205,7 +249,7 @@
         /// </summary>
         void ResizeData()
         {
-        	var newSize = Data.Length + Root.BucketCapacity * 2;
+            var newSize = Data.Length + Root.BucketCapacity * 2;
             Array.Resize<T>(ref Data, newSize);
             Array.Resize<double[]>(ref Points, newSize);
         }
@@ -214,10 +258,10 @@
         #region ICollection Implementation
         public int Count
         {
-        	get
-        	{
-        		return Root.Size;
-        	}
+            get
+            {
+                return Root.Size;
+            }
         }
 
         public void Clear()
@@ -229,59 +273,59 @@
         }
         public bool Contains(T item)
         {
-        	return IndexOf(item) > -1;
+            return IndexOf(item) > -1;
         }
         public void CopyTo(T[] array, int arrayIndex)
         {
-        	// Segment Copy from Array Holes
-        	var hole = 0;
-        	
-        	for (int i = AvailableIndices.Count - 1 ; i > -1 ; --i)
-        	{
-        		var nextHole = AvailableIndices.Values[i];
-        		var lengthHole = nextHole - hole;
-        		Array.Copy(Data, hole, array, arrayIndex, lengthHole);
-        		hole = nextHole + 1;
-        		arrayIndex += lengthHole;
-        	}
-        	
-        	Array.Copy(Data, hole, array, arrayIndex, DataSize - hole);
+            // Segment Copy from Array Holes
+            var hole = 0;
+            
+            for (int i = AvailableIndices.Count - 1 ; i > -1 ; --i)
+            {
+                var nextHole = AvailableIndices.Values[i];
+                var lengthHole = nextHole - hole;
+                Array.Copy(Data, hole, array, arrayIndex, lengthHole);
+                hole = nextHole + 1;
+                arrayIndex += lengthHole;
+            }
+            
+            Array.Copy(Data, hole, array, arrayIndex, DataSize - hole);
         }        
         public bool IsReadOnly
         {
-        	get
-        	{
-        		return false;
-        	}
+            get
+            {
+                return false;
+            }
         }
         public void Add(T item)
         {
-        	AddPoint(Enumerable.Repeat(0.0, Dimensions).ToArray(), item);
+            AddPoint(Enumerable.Repeat(0.0, Dimensions).ToArray(), item);
         }
         #endregion
         
         #region Enumerable Implementation
         public IEnumerator<T> GetEnumerator()
         {
-        	// Enumerate around Array Holes
-        	var valids = new int[DataSize-AvailableIndices.Count];
-        	var hole = 0;
-        	var idx = 0;
-        	
-        	for (int i = AvailableIndices.Count - 1 ; i > -1 ; --i)
-        	{
-        		var nextHole = AvailableIndices.Values[i];
-        		
-        		while (hole < nextHole)
-        			valids[idx++] = hole++;
-        		
-        		++hole;
-        	}
-        	
-        	while (hole < DataSize)
-        		valids[idx++] = hole++;
-        	
-        	return valids.Select(index => Data[index]).GetEnumerator();
+            // Enumerate around Array Holes
+            var valids = new int[DataSize-AvailableIndices.Count];
+            var hole = 0;
+            var idx = 0;
+            
+            for (int i = AvailableIndices.Count - 1 ; i > -1 ; --i)
+            {
+                var nextHole = AvailableIndices.Values[i];
+                
+                while (hole < nextHole)
+                    valids[idx++] = hole++;
+                
+                ++hole;
+            }
+            
+            while (hole < DataSize)
+                valids[idx++] = hole++;
+            
+            return valids.Select(index => Data[index]).GetEnumerator();
         }
         
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
@@ -293,54 +337,55 @@
         #region IList Implementation
         public T this[int index]
         {
-        	get
-        	{
-	        	if (index < 0 || index >= DataSize || AvailableIndices.ContainsValue(index))
-	        		throw new IndexOutOfRangeException(string.Format("Given Index ({0}) is not valued", index));
-	        	
-        		return Data[index];
-        	}
-        	set
-        	{
-        		throw new NotSupportedException();
-        	}
+            get
+            {
+                if (index < 0 || index >= DataSize || AvailableIndices.ContainsValue(index))
+                    throw new IndexOutOfRangeException(string.Format("Given Index ({0}) is not valued", index));
+                
+                return Data[index];
+            }
+            set
+            {
+                throw new NotSupportedException();
+            }
         }
         
         public int IndexOf(T item)
         {
-        	// Check only Valids Indices
-        	var hole = 0;
-        	for (int i = AvailableIndices.Count - 1 ; i > -1 ; --i)
-        	{
-        		var nextHole = AvailableIndices.Values[i];
-        		
-        		for (int j = hole ; j < nextHole ; ++j)
-        		{
-        			if (Data[j].Equals(item))
-        				return j;
-        		}
-        		
-        		hole = nextHole + 1;
-        	}
-        	
-        	for (int i = hole ; i < DataSize ; ++i)
-        	{
-        		if (Data[i].Equals(item))
-        			return i;
-        	}
-        	
-        	return -1;
+            // Check only Valids Indices
+            var hole = 0;
+            for (int i = AvailableIndices.Count - 1 ; i > -1 ; --i)
+            {
+                var nextHole = AvailableIndices.Values[i];
+                
+                for (int j = hole ; j < nextHole ; ++j)
+                {
+                    if (Data[j].Equals(item))
+                        return j;
+                }
+                
+                hole = nextHole + 1;
+            }
+            
+            for (int i = hole ; i < DataSize ; ++i)
+            {
+                if (Data[i].Equals(item))
+                    return i;
+            }
+            
+            return -1;
         }
         
         public void RemoveAt(int index)
         {
-        	if (index < 0 || index >= DataSize || AvailableIndices.ContainsValue(index))
-        		throw new IndexOutOfRangeException(string.Format("Given Index ({0}) is not valued", index));
+            if (index < 0 || index >= DataSize || AvailableIndices.ContainsValue(index))
+                throw new IndexOutOfRangeException(string.Format("Given Index ({0}) is not valued", index));
 
-        	Root.RemovePoint(index, Points[index]);
-    		Data[index] = default(T);
-    		Points[index] = null;
-    		
+            Root.RemovePoint(index, Points[index]);
+            Data[index] = default(T);
+            Points[index] = null;
+            ++RemovalCount;
+            
             // Remove index from valid Indices
             if (index == DataSize - 1)
             {
@@ -348,8 +393,8 @@
                 // Compact Data Collection
                 while (AvailableIndices.Count > 0 && AvailableIndices.Values[0] == DataSize - 1)
                 {
-                	--DataSize;
-                	AvailableIndices.RemoveAt(0);
+                    --DataSize;
+                    AvailableIndices.RemoveAt(0);
                 }
             }
             else
@@ -360,7 +405,7 @@
         
         public void Insert(int index, T item)
         {
-        	throw new NotSupportedException();
+            throw new NotSupportedException();
         }
         #endregion
         

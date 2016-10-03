@@ -81,13 +81,13 @@
         
         public int this[int Index]
         {
-        	get
-        	{
-        		if (Index < 0 || Index >= Size)
-        			throw new IndexOutOfRangeException(string.Format("Given Index ({0}) out of Range (0..{1})", Index, Size - 1));
-        		
-        		return DataIndices[Index];
-        	}
+            get
+            {
+                if (Index < 0 || Index >= Size)
+                    throw new IndexOutOfRangeException(string.Format("Given Index ({0}) out of Range (0..{1})", Index, Size - 1));
+                
+                return DataIndices[Index];
+            }
         }
         #endregion
         
@@ -102,6 +102,7 @@
             // Find the correct leaf node.
             var cursor = this;
             var point = Points[Index];
+            
             while (!cursor.IsLeaf)
             {
                 // Extend the size of the leaf.
@@ -124,26 +125,26 @@
         /// <returns>true if Index found and removed.</returns>
         internal bool RemovePoint(int Index, double[] Point)
         {
-        	var cursor = this;
-        	var walkPath = new Stack<KDTreeNode>();
-        	while (!cursor.IsLeaf)
-        	{
-        		walkPath.Push(cursor);
-        		cursor = Point[cursor.SplitDimension] > cursor.SplitValue ? cursor.Right : cursor.Left;
-        	}
-        	
-        	var idx = cursor.IndexOf(Index);
-        	
-        	if (idx > -1)
-        	{
-        		while (walkPath.Count > 0)
-        			--walkPath.Pop().Size;
-        		
+            var cursor = this;
+            var walkPath = new Stack<KDTreeNode>();
+            while (!cursor.IsLeaf)
+            {
+                walkPath.Push(cursor);
+                cursor = Point[cursor.SplitDimension] > cursor.SplitValue ? cursor.Right : cursor.Left;
+            }
+            
+            var idx = cursor.IndexOf(Index);
+            
+            if (idx > -1)
+            {
+                while (walkPath.Count > 0)
+                    --walkPath.Pop().Size;
+                
                 // Shift Array Left
                 Array.Copy(cursor.DataIndices, idx + 1, cursor.DataIndices, idx, cursor.Size - (idx + 1));
                 --cursor.Size;
                 return true;
-        	}
+            }
 
             return false;
         }
@@ -154,7 +155,8 @@
         /// <param name="OldPoint">The Old Point Position.</param>
         /// <param name="Index">Data Index to Search for Moving.</param>
         /// <param name="Points">The points collection with Point at Index.</param>
-        internal void MovePoint(double[] OldPoint, int Index, double[][] Points)
+        /// <returns>true if the Data Index was moved inside the same node.</returns>
+        internal bool MovePoint(double[] OldPoint, int Index, double[][] Points)
         {
             // Find the Old leaf node.
             var cursor = this;
@@ -175,17 +177,19 @@
             
             if (idx > -1)
             {
-            	cursor.ExtendBounds(point);
-                return;
+                cursor.ExtendBounds(point);
+                return true;
             }
             
             RemovePoint(Index, OldPoint);                    
             cursor.AddLeafPoint(Index, Points);
             
             while (walkPath.Count > 0)
-            	++walkPath.Pop().Size;
+                ++walkPath.Pop().Size;
+            
+            return false;
         }
-                
+        
         /// <summary>
         /// Get First Index of Data Index-Value in this Node. 
         /// </summary>

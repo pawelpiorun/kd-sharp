@@ -278,14 +278,14 @@
             
             RegenBitmap();
             
-            if (MoveChange != null)
-            {
-                MoveChange.Stop();
-                MoveChange = null;
-            }
-            
             lock (LockSync)
             {
+                if (MoveChange != null)
+                {
+                    MoveChange.Stop();
+                    MoveChange = null;
+                }
+                
                 if (Tree.Dimensions > 2)
                 {
                     var data = Tree.ToArray();
@@ -311,8 +311,10 @@
                         Tree.AddPoint(new [] { move.x, move.y, move.speedx, move.speedy, move.start }, move);
                     }
                     
-                    MoveChange = new Timer(1000);
+                    MoveChange = new Timer();
+                    MoveChange.AutoReset = false;
                     MoveChange.Elapsed += (object sndr, ElapsedEventArgs ev) => ChangeMovement();
+                    MoveChange.Interval = 1000;
                     MoveChange.Start();
                 }
             }
@@ -320,22 +322,54 @@
         
         void ChangeMovement()
         {
+            KDTree.KDTree<EllipseWrapper> currentTree;
+            EllipseWrapper[] items;
+            
             lock (LockSync)
             {
-                if (Tree.Dimensions > 2)
+                currentTree = Tree;
+                items = Tree.ToArray();
+                if (Tree.Dimensions < 3)
+                    return;
+            }
+            
+            foreach (var item in items)
+            {
+                lock (LockSync)
                 {
-                    foreach (var item in Tree)
+                    if (currentTree != Tree)
+                        break;
+                    
+                    var elapsed = DateTime.UtcNow.Ticks - item.start;
+                    item.x += item.speedx * elapsed;
+                    item.y += item.speedy * elapsed;
+                    
+                    if (item.x < 0.0 || item.x > 1.0 || item.y < 0.0 || item.y > 1.0)
                     {
-                        var elapsed = DateTime.UtcNow.Ticks - item.start;
-                        item.x += item.speedx * elapsed;
-                        item.y += item.speedy * elapsed;
+                        var dx = item.x - 0.5;
+                        var dy = item.y - 0.5;
+                        var norm = Math.Sqrt(dx*dx + dy*dy);
+                        
+                        item.speedx = - (dx / norm / TimerSecondResolution / 1.5);
+                        item.speedy = - (dy / norm / TimerSecondResolution / 1.5);
+                    }
+                    else
+                    {
                         item.speedx = RandomSpeed;
                         item.speedy = RandomSpeed;
-                        
-                        item.start = DateTime.UtcNow.Ticks;
-                        Tree.MovePoint(new [] { item.x, item.y, item.speedx, item.speedy, item.start }, item);
                     }
+                    
+                    item.start = DateTime.UtcNow.Ticks;
+                    Tree.MovePoint(new [] { item.x, item.y, item.speedx, item.speedy, item.start }, item);
                 }
+            }
+            
+            lock (LockSync)
+            {
+                if (Tree.RemovalCount > 2 * Tree.Count)
+                    Tree.Regen();
+                
+                MoveChange.Interval = 1000;
             }
         }
 
