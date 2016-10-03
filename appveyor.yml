@@ -50,9 +50,7 @@ build:
 
 after_build:
 
-- cmd: >-
-
-    7z a -tzip KDSharp_KDTree_%CONFIGURATION%.zip %APPVEYOR_BUILD_FOLDER%\Binaries\KDVisuals\%CONFIGURATION%\*
+- cmd: 7z a -tzip KDSharp_KDTree_%CONFIGURATION%.zip %APPVEYOR_BUILD_FOLDER%\Binaries\KDVisuals\%CONFIGURATION%\*
 
 artifacts:
 
