@@ -27,8 +27,7 @@
             this.SinglePoint = true;
 
             // Setup leaf elements.
-            this.Points = new double[BucketCapacity][];
-            this.Data = new int[BucketCapacity];
+            this.DataIndices = new int[BucketCapacity];
         }
         #endregion
         
@@ -48,13 +47,9 @@
         public int Size { get; private set; }
         
         /// <summary>
-        /// Array of locations
-        /// </summary>
-        public double[][] Points;
-        /// <summary>
         /// Array of data indices
         /// </summary>
-        public int[] Data;
+        int[] DataIndices;
         
         /// <summary>
         /// Left and Right Children Nodes
@@ -82,50 +77,73 @@
         /// <summary>
         /// Is this Node a Leaf ?
         /// </summary>
-        public bool IsLeaf { get { return this.Points != null; } }
+        public bool IsLeaf { get { return DataIndices != null; } }
+        
+        public int this[int Index]
+        {
+        	get
+        	{
+        		if (Index < 0 || Index >= Size)
+        			throw new IndexOutOfRangeException(string.Format("Given Index ({0}) out of Range (0..{1})", Index, Size - 1));
+        		
+        		return DataIndices[Index];
+        	}
+        }
         #endregion
         
         #region Operations
         /// <summary>
         /// Insert a new point from this node.
         /// </summary>
-        /// <param name="Point">The position which represents the data.</param>
         /// <param name="Index">The index of the data.</param>
-        internal void AddPoint(double[] Point, int Index)
+        /// <param name="Points">The points collection with Point at Index.</param>
+        internal void AddPoint(int Index, double[][] Points)
         {
             // Find the correct leaf node.
-            var pCursor = this;
-            while (!pCursor.IsLeaf)
+            var cursor = this;
+            var point = Points[Index];
+            while (!cursor.IsLeaf)
             {
                 // Extend the size of the leaf.
-                pCursor.ExtendBounds(Point);
+                cursor.ExtendBounds(Points[Index]);
                 // Increment Size.
-                ++pCursor.Size;
+                ++cursor.Size;
 
-                pCursor = Point[pCursor.SplitDimension] > pCursor.SplitValue ? pCursor.Right : pCursor.Left;
+                cursor = point[cursor.SplitDimension] > cursor.SplitValue ? cursor.Right : cursor.Left;
             }
 
             // Insert it into the leaf.
-            pCursor.AddLeafPoint(Point, Index);
+            cursor.AddLeafPoint(Index, Points);
         }
         
         /// <summary>
         /// Remove a Point from this Node.
         /// </summary>
         /// <param name="Index">The Data Index to Remove.</param>
+        /// <param name="Point">The Data Index Point.</param>
         /// <returns>true if Index found and removed.</returns>
-        internal bool RemovePoint(int Index)
+        internal bool RemovePoint(int Index, double[] Point)
         {
-            KDTreeNode node;
-            var foundIndex = GetPointNode(Index, out node);
-            
-            if (foundIndex > -1)
-            {
+        	var cursor = this;
+        	var walkPath = new Stack<KDTreeNode>();
+        	while (!cursor.IsLeaf)
+        	{
+        		walkPath.Push(cursor);
+        		cursor = Point[cursor.SplitDimension] > cursor.SplitValue ? cursor.Right : cursor.Left;
+        	}
+        	
+        	var idx = cursor.IndexOf(Index);
+        	
+        	if (idx > -1)
+        	{
+        		while (walkPath.Count > 0)
+        			--walkPath.Pop().Size;
+        		
                 // Shift Array Left
-                Array.Copy(node.Data, foundIndex+1, node.Data, foundIndex, node.Size-(foundIndex+1));
-                DecrementSizeFrom(node);
+                Array.Copy(cursor.DataIndices, idx + 1, cursor.DataIndices, idx, cursor.Size - (idx + 1));
+                --cursor.Size;
                 return true;
-            }
+        	}
 
             return false;
         }
@@ -133,87 +151,41 @@
         /// <summary>
         /// Move a Point from this Node.
         /// </summary>
-        /// <param name="Point">The New Point Position.</param>
-        /// <param name="Index">Index to Search for Moving.</param>
-        /// <returns>true if Index found and moved.</returns>
-        internal bool MovePoint(double[] Point, int Index)
+        /// <param name="OldPoint">The Old Point Position.</param>
+        /// <param name="Index">Data Index to Search for Moving.</param>
+        /// <param name="Points">The points collection with Point at Index.</param>
+        internal void MovePoint(double[] OldPoint, int Index, double[][] Points)
         {
-            // Find the target leaf node.
+            // Find the Old leaf node.
             var cursor = this;
             var walkPath = new Stack<KDTreeNode>();
+            var point = Points[Index];
+            
             while (!cursor.IsLeaf)
             {
                 walkPath.Push(cursor);
-                cursor = Point[cursor.SplitDimension] > cursor.SplitValue ? cursor.Right : cursor.Left;
+                
+                // Extends Bounds of each node on the path.
+                cursor.ExtendBounds(point);
+                cursor = point[cursor.SplitDimension] > cursor.SplitValue ? cursor.Right : cursor.Left;
             }
-            
+                        
             // Check if Item is in the target node
-            var foundIndex = cursor.IndexOf(Index);
+            var idx = cursor.IndexOf(Index);
             
-            if (foundIndex > -1)
+            if (idx > -1)
             {
-                // Extends Bounds
-                while (walkPath.Count > 0)
-                    walkPath.Pop().ExtendBounds(Point);
-                
-                cursor.ExtendBounds(Point);
-                Array.Copy(Point, cursor.Points[foundIndex], Point.Length);
-                return true;
+            	cursor.ExtendBounds(point);
+                return;
             }
             
-            // Could not be moved inside the same leaf, Remove and ReInsert...
-            if (RemovePoint(Index))
-            {
-                // Extends Bounds
-                while (walkPath.Count > 0)
-                {
-                    var node = walkPath.Pop();
-                    node.ExtendBounds(Point);
-                    ++node.Size;
-                }
-                
-                cursor.AddLeafPoint(Point, Index);
-                return true;
-            }
+            RemovePoint(Index, OldPoint);                    
+            cursor.AddLeafPoint(Index, Points);
             
-            return false;
+            while (walkPath.Count > 0)
+            	++walkPath.Pop().Size;
         }
-        
-        /// <summary>
-        /// Get the KDTreeNode containing this Data Index and its in-node Index.
-        /// </summary>
-        /// <param name="Index">Data Index to search.</param>
-        /// <param name="Node">Node Where Index is found.</param>
-        /// <returns>Index inside Node Data or Null if not found.</returns>
-        internal int GetPointNode(int Index, out KDTreeNode Node)
-        {
-            var nodes = new Stack<KDTreeNode>();
-            nodes.Push(this);
-            
-            // Find Index in Whole Tree.
-            while (nodes.Count > 0)
-            {
-                var currentNode = nodes.Pop();
                 
-                var nodeIndex = currentNode.IndexOf(Index);
-                
-                if (nodeIndex > -1)
-                {
-                    Node = currentNode;
-                    return nodeIndex;
-                }
-                
-                if (!currentNode.IsLeaf)
-                {
-                    nodes.Push(currentNode.Right);
-                    nodes.Push(currentNode.Left);
-                }
-            }
-            
-            Node = null;
-            return -1;
-        }
-        
         /// <summary>
         /// Get First Index of Data Index-Value in this Node. 
         /// </summary>
@@ -226,33 +198,13 @@
             
             for (int i = 0 ; i < Size ; ++i)
             {
-                if (Data[i] == Index)
+                if (DataIndices[i] == Index)
                     return i;
             }
             
             return -1;
         }
         
-        /// <summary>
-        /// Decrement Data Size from this Node.
-        /// </summary>
-        /// <param name="Node">The target Node to reach for Decrement.</param>
-        void DecrementSizeFrom(KDTreeNode Node)
-        {
-            var pCursor = this;
-            // Decrement while Walking to the Node.
-            while (!pCursor.IsLeaf)
-            {
-                --pCursor.Size;
-                pCursor = Node.MaxBound[pCursor.SplitDimension] > pCursor.SplitValue ? pCursor.Right : pCursor.Left;
-            }
-            
-            if (pCursor != Node)
-                throw new InvalidOperationException("Wrong Path in Tree when Decrementing Size!");
-            
-            --Node.Size;
-        }
-                
         /// <summary>
         /// Empty Tree.
         /// </summary>
@@ -261,8 +213,7 @@
             Size = 0;
             SinglePoint = true;
 
-            Points = new double[BucketCapacity][];
-            Data = new int[BucketCapacity];
+            DataIndices = new int[BucketCapacity];
             
             Right = null;
             Left = null;
@@ -319,24 +270,23 @@
         /// <summary>
         /// Insert a point into the leaf.
         /// </summary>
-        /// <param name="Point">The point to insert the data at.</param>
         /// <param name="Index">The index of the point.</param>
-        void AddLeafPoint(double[] Point, int Index)
+        /// <param name="Points">The points collection with Point at Index.</param>
+        void AddLeafPoint(int Index, double[][] Points)
         {
             // Add the data point to this node.
-            Points[Size] = Point;
-            Data[Size] = Index;
-            ExtendBounds(Point);
+            DataIndices[Size] = Index;
+            ExtendBounds(Points[Index]);
             ++Size;
 
             // Split if the node is getting too large in terms of data.
-            if (Size == Points.Length)
+            if (Size == DataIndices.Length)
             {
                 // If the node is getting too physically large.
                 if (CalculateSplit())
                 {
                     // If the node successfully had it's split value calculated, split node.
-                    SplitLeafNode();
+                    SplitLeafNode(Points);
                 }
                 else
                 {
@@ -398,7 +348,7 @@
         /// Split this leaf node by creating left and right children, then moving all the children of
         /// this node into the respective buckets.
         /// </summary>
-        void SplitLeafNode()
+        void SplitLeafNode(double[][] Points)
         {
             // Create the new children.
             Right = new KDTreeNode(Dimensions, BucketCapacity);
@@ -408,21 +358,20 @@
             for (int i = 0; i < Size; ++i)
             {
                 // Store.
-                double[] tOldPoint = Points[i];
-                int kOldData = Data[i];
+                int oldDataIndex = DataIndices[i];
+                double[] oldPoint = Points[oldDataIndex];
 
                 // If larger, put it in the right.
-                if (tOldPoint[SplitDimension] > SplitValue)
-                    Right.AddPoint(tOldPoint, kOldData);
+                if (oldPoint[SplitDimension] > SplitValue)
+                    Right.AddPoint(oldDataIndex, Points);
 
                 // If smaller, put it in the left.
                 else
-                    Left.AddPoint(tOldPoint, kOldData);
+                    Left.AddPoint(oldDataIndex, Points);
             }
 
             // Wipe the data from this KDTreeNode.
-            Points = null;
-            Data = null;
+            DataIndices = null;
         }
         
         /// <summary>
@@ -430,10 +379,8 @@
         /// </summary>
         void IncreaseLeafCapacity()
         {
-            Array.Resize<double[]>(ref Points, Points.Length + BucketCapacity);
-            Array.Resize<int>(ref Data, Data.Length + BucketCapacity);
-        }
-
+            Array.Resize<int>(ref DataIndices, DataIndices.Length + BucketCapacity);
+        }   
         #endregion
     }
 }

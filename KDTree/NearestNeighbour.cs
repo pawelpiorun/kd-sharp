@@ -89,8 +89,7 @@
             while (pPending.Size > 0 && (pEvaluated.Size == 0 || (pPending.MinKey < pEvaluated.MinKey)))
             {
                 // If there are pending paths possibly closer than the nearest evaluated point, check it out
-                var pCursor = pPending.Min;
-                pPending.RemoveMin();
+                var pCursor = pPending.RemoveMin();
 
                 // Descend the tree, recording paths not taken
                 while (!pCursor.IsLeaf)
@@ -132,7 +131,7 @@
                     {
                         // If all the points in this KD node are in one place.
                         // Work out the distance between this point and the search point.
-                        double fDistance = kDistanceFunction.Distance(pCursor.Points[0], tSearchPoint);
+                        double fDistance = kDistanceFunction.Distance(Tree.GetPointAt(pCursor[0]), tSearchPoint);
     
                         // Skip if the point exceeds the threshold.
                         // Technically this should never happen, but be prescise.
@@ -146,11 +145,11 @@
                             {
                                 // If we don't need any more, replace max
                                 if (pEvaluated.Size == iPointsRemaining)
-                                    pEvaluated.ReplaceMax(fDistance, Tree[pCursor.Data[i]]);
+                                    pEvaluated.ReplaceMax(fDistance, Tree[pCursor[i]]);
     
                                 // Otherwise insert.
                                 else
-                                    pEvaluated.Insert(fDistance, Tree[pCursor.Data[i]]);
+                                    pEvaluated.Insert(fDistance, Tree[pCursor[i]]);
                             }
                         }
                     }
@@ -161,7 +160,7 @@
                         for (int i = 0; i < pCursor.Size; ++i)
                         {
                             // Compute the distance between the points.
-                            double fDistance = kDistanceFunction.Distance(pCursor.Points[i], tSearchPoint);
+                            double fDistance = kDistanceFunction.Distance(Tree.GetPointAt(pCursor[i]), tSearchPoint);
     
                             // Skip if it exceeds the threshold.
                             if (fThreshold >= 0 && fDistance > fThreshold)
@@ -169,11 +168,11 @@
     
                             // Insert the point if we have more to take.
                             if (pEvaluated.Size < iPointsRemaining)
-                                pEvaluated.Insert(fDistance, Tree[pCursor.Data[i]]);
+                                pEvaluated.Insert(fDistance, Tree[pCursor[i]]);
     
                             // Otherwise replace the max.
                             else if (fDistance < pEvaluated.MaxKey)
-                                pEvaluated.ReplaceMax(fDistance, Tree[pCursor.Data[i]]);
+                                pEvaluated.ReplaceMax(fDistance, Tree[pCursor[i]]);
                         }
                     }
                 }

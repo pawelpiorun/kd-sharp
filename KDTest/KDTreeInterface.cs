@@ -22,7 +22,7 @@
         {
             var tree = new KDTree<int>(1);
             
-            Assert.IsNotNull(tree);
+            Assert.AreEqual(0, tree.Count);
         }
 
         [Test]
@@ -30,7 +30,7 @@
         {
             var tree = new KDTree<int>(2);
             
-            Assert.IsNotNull(tree);
+            Assert.AreEqual(0, tree.Count);
         }
 
         [Test]
@@ -38,7 +38,7 @@
         {
             var tree = new KDTree<int>(3);
             
-            Assert.IsNotNull(tree);
+            Assert.AreEqual(0, tree.Count);
         }
 
         [Test]
@@ -52,7 +52,7 @@
         {
             var tree = new KDTree<int>(1, 8);
             
-            Assert.IsNotNull(tree);
+            Assert.AreEqual(0, tree.Count);
         }
         
         #endregion
@@ -174,7 +174,7 @@
             
             tree.AddPoint(new [] { 0.0, 0.0, 0.0 }, 0);
             
-            Assert.AreEqual(1, tree.Size);
+            Assert.AreEqual(1, tree.Count);
         }
         
         [Test]
@@ -185,7 +185,7 @@
             for (int i = 0 ; i < 10 ; i++)
                 tree.AddPoint(new [] { 0.0, 0.0, 0.0 }, 0);
             
-            Assert.AreEqual(10, tree.Size);
+            Assert.AreEqual(10, tree.Count);
         }
         #endregion
         
@@ -196,6 +196,7 @@
             var tree = new KDTree<int>(1, 2);
             
             Assert.IsFalse(tree.Remove(1));
+            Assert.AreEqual(0, tree.Count);
         }
         
         [Test]
@@ -206,6 +207,7 @@
             tree.AddPoint(new [] { 0.0 }, 1);
             
             Assert.IsTrue(tree.Remove(1));
+            Assert.AreEqual(0, tree.Count);
         }
         
         [Test]
@@ -216,6 +218,7 @@
             tree.AddPoint(new [] { 0.0 }, 1);
             
             Assert.IsFalse(tree.Remove(2));
+            Assert.AreEqual(1, tree.Count);
         }
         
         [Test]
@@ -228,7 +231,7 @@
             
             tree.Remove(0);
             
-            Assert.AreEqual(9, tree.Size);
+            Assert.AreEqual(9, tree.Count);
         }
         
         [Test]
@@ -239,9 +242,8 @@
             for (int i = 0 ; i < 10 ; i++)
                 tree.AddPoint(new [] { 0.0, 0.0, 0.0 }, 0);
             
-            tree.Remove(1);
-            
-            Assert.AreEqual(10, tree.Size);
+            Assert.IsFalse(tree.Remove(1));
+            Assert.AreEqual(10, tree.Count);
         }
         #endregion
         
@@ -252,6 +254,7 @@
             var tree = new KDTree<int>(1, 2);
             
             Assert.IsFalse(tree.MovePoint(new [] { 0.0 }, 1));
+            Assert.AreEqual(0, tree.Count);
         }
         
         [Test]
@@ -262,6 +265,7 @@
             tree.AddPoint(new [] { 0.0 }, 1);
             
             Assert.IsTrue(tree.MovePoint(new [] { 1.0 }, 1));
+            Assert.AreEqual(1, tree.Count);
         }
         
         [Test]
@@ -274,6 +278,7 @@
             tree.MovePoint(new [] { 1.0 }, 1);
             
             CollectionAssert.AreEquivalent(new [] { 1.0 }, tree.GetPoint(1));
+            Assert.AreEqual(1, tree.Count);
         }
         
         [Test]
@@ -284,6 +289,7 @@
             tree.AddPoint(new [] { 0.0 }, 1);
             
             Assert.IsFalse(tree.MovePoint(new [] { 1.0 }, 2));
+            Assert.AreEqual(1, tree.Count);
         }
         
         [Test]
@@ -302,6 +308,62 @@
             tree.MovePoint(new [] { 3.0, 3.0, 3.0 }, 3);
             
             CollectionAssert.AreEquivalent(new [] { 3.0, 3.0, 3.0 }, tree.GetPoint(3));
+            Assert.AreEqual(21, tree.Count);
+        }
+        #endregion
+        
+        #region CopyTo
+        [Test]
+        public void CopyTo_EmptyTree_EmptyArray()
+        {
+        	var tree = new KDTree<int>(1);
+        	
+        	var array = new int[0];
+        	tree.CopyTo(array, 0);
+        	
+        	CollectionAssert.IsEmpty(array);
+        }
+        
+        [Test]
+        public void CopyTo_OneElement_OneElementArray()
+        {
+        	var tree = new KDTree<int>(1);
+        	tree.Add(1);
+        	var array = new int[1];
+        	tree.CopyTo(array, 0);
+        	
+        	CollectionAssert.AreEquivalent(new [] { 1 }, array);
+        }
+        
+        [Test]
+        public void CopyTo_TenElement_TenElementArray()
+        {
+        	var tree = new KDTree<int>(1);
+        	foreach (var item in Enumerable.Range(1, 10))
+        		tree.Add(item);
+        	
+        	var array = new int[10];
+        	
+        	tree.CopyTo(array, 0);
+        	
+        	CollectionAssert.AreEquivalent(Enumerable.Range(1, 10), array);
+        }
+        
+        [Test]
+        public void CopyTo_TenElementFiveRemoved_FiveElementArray()
+        {
+        	var tree = new KDTree<int>(1);
+        	foreach (var item in Enumerable.Range(1, 10))
+        		tree.Add(item);
+        	
+        	foreach (var item in Enumerable.Range(1, 5))
+        		tree.Remove(item * 2);
+        	
+        	var array = new int[5];
+        	
+        	tree.CopyTo(array, 0);
+        	
+        	CollectionAssert.AreEquivalent(Enumerable.Range(1, 10).Where(i => i % 2 != 0), array);
         }
         #endregion
     }

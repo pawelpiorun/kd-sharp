@@ -12,7 +12,7 @@
         /// <summary>
         /// The default size for a min heap.
         /// </summary>
-        private static int DEFAULT_SIZE = 64;
+        private const int DEFAULT_SIZE = 64;
 
         /// <summary>
         /// The data array.  This stores the data items in the heap.
@@ -87,16 +87,19 @@
         /// <summary>
         /// Remove the smallest element.
         /// </summary>
-        public void RemoveMin()
+        public T RemoveMin()
         {
             if (Size == 0)
                 throw new Exception();
 
             Size--;
+            var min = tData[0];
             tData[0] = tData[Size];
             tKeys[0] = tKeys[Size];
             tData[Size] = default(T);
             SiftDown(0);
+            
+            return min;
         }
 
         /// <summary>

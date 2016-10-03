@@ -10,7 +10,7 @@
     /// </summary>
     /// <typeparam name="T">The generic data type we want this tree to contain.</typeparam>
     /// <remarks>This is based on this: https://bitbucket.org/rednaxela/knn-benchmark/src/tip/ags/utils/dataStructures/trees/thirdGenKD/ </remarks>
-    public class KDTree<T> : ICollection<T>
+    public class KDTree<T> : ICollection<T>, IList<T>
     {
         /// <summary>
         /// Constant Default Bucket Capacity.
@@ -28,34 +28,24 @@
         T[] Data;
         
         /// <summary>
+        /// Objects Locations Stored in the Tree.
+        /// </summary>
+        double[][] Points;
+
+        /// <summary>
         /// Next Index to Insert Object.
         /// </summary>
-        int NextIndex;
+        int DataSize;
         
         /// <summary>
         /// Available Indices for Data Array Holes
         /// </summary>
-        Stack<int> AvailableIndexes;
-        
-        /// <summary>
-        /// Valid Indexes Only
-        /// </summary>
-        IEnumerable<int> ValidIndexes { get { return Enumerable.Range(0, NextIndex).Except(AvailableIndexes); } }
-        
+        SortedList<int, int> AvailableIndices;
+                
         /// <summary>
         /// Tree Root Node.
         /// </summary>
         internal readonly KDTreeNode Root;
-        
-        /// <summary>
-        /// Retrieve Object from Index.
-        /// </summary>
-        internal T this[int index] { get { return Data[index]; } }
-        
-        /// <summary>
-        /// Retrieve the Tree Object Count
-        /// </summary>
-        public int Size { get { return Root.Size; } }
         
         /// <summary>
         /// Retrieve the Tree Dimension Count
@@ -82,6 +72,16 @@
         }
         
         /// <summary>
+        /// Create a new instance of <see cref="KDTree{T}"/> given a number of dimensions and a <see cref="DistanceFunctions.DistanceFunction"/>.
+        /// </summary>
+        /// <param name="DistanceFunction">The Default Distance Function to use for NearestNeighbours.</param>
+        /// <param name="iDimensions">The number of data sorting dimensions. i.e. 3 for a 3D point.</param>
+        public KDTree(DistanceFunction DistanceFunction, int iDimensions)
+            : this(DistanceFunction, iDimensions, DEFAULT_BUCKET_CAPACITY)
+        {
+        }
+        
+        /// <summary>
         /// Create a new instance of <see cref="KDTree{T}"/> given a number of dimensions, an initial bucket capacity and a <see cref="DistanceFunctions.DistanceFunction"/>.
         /// </summary>
         /// <param name="DistanceFunction">The Default Distance Function to use for NearestNeighbours.</param>
@@ -91,19 +91,10 @@
         {
             this.DistanceFunction = DistanceFunction;
             this.Data = new T[iBucketCapacity];
+            this.Points = new double[iBucketCapacity][];
             this.Root = new KDTreeNode(iDimensions, iBucketCapacity);
-            this.NextIndex = 0;
-            this.AvailableIndexes = new Stack<int>();
-        }
-
-        /// <summary>
-        /// Create a new instance of <see cref="KDTree{T}"/> given a number of dimensions and a <see cref="DistanceFunctions.DistanceFunction"/>.
-        /// </summary>
-        /// <param name="DistanceFunction">The Default Distance Function to use for NearestNeighbours.</param>
-        /// <param name="iDimensions">The number of data sorting dimensions. i.e. 3 for a 3D point.</param>
-        public KDTree(DistanceFunction DistanceFunction, int iDimensions)
-            : this(DistanceFunction, iDimensions, DEFAULT_BUCKET_CAPACITY)
-        {
+            this.DataSize = 0;
+            this.AvailableIndices = new SortedList<int, int>();
         }
 
         #region Tree Methods
@@ -114,24 +105,30 @@
         /// <param name="Value">Object to Add.</param>
         public void AddPoint(double[] Point, T Value)
         {
-            if (Point.Length != Root.Dimensions)
-                throw new ArgumentException("Point should have same lenght as Tree Dimensions ("+Root.Dimensions+")...", "Point");
+            if (Point.Length != Dimensions)
+            	throw new ArgumentException(string.Format("Point should have same lenght as Tree Dimensions ({0})...", Dimensions), "Point");
             
-            // Check if Data Array have Hole
-            if (AvailableIndexes.Count > 0)
+            // Check if Data Array have Holes
+            if (AvailableIndices.Count > 0)
             {
-                var index = AvailableIndexes.Pop();
-                Root.AddPoint(Point, index);
-                Data[index] = Value;
+            	var last = AvailableIndices.Count - 1;
+            	var index = AvailableIndices.Values[last];
+            	
+	            Data[index] = Value;
+	            Points[index] = Point;
+	            Root.AddPoint(index, Points);
+				AvailableIndices.RemoveAt(last);
             }
             else
             {
-                if (NextIndex >= Data.Length)
-                    ResizeData();
-                
-                var index = NextIndex++;
-                Root.AddPoint(Point, index);
-                Data[index] = Value;
+            	var index = DataSize;
+            	if (index >= Data.Length)
+	                ResizeData();
+            	
+	            Data[index] = Value;
+	            Points[index] = Point;
+	            Root.AddPoint(index, Points);
+            	++DataSize;
             }
         }
         
@@ -140,23 +137,17 @@
         /// </summary>
         /// <param name="Value">Object to Remove.</param>
         /// <returns>true if Object is found.</returns>
-        public bool RemovePoint(T Value)
+        public bool Remove(T Value)
         {
-            var result = false;
-            foreach(var index in ValidIndexes.Where(valid => Value.Equals(Data[valid])))
-            {
-                result = Root.RemovePoint(index);
-                
-                // Remove index from valid Indexes
-                if (index == NextIndex - 1)
-                    --NextIndex;
-                else
-                    AvailableIndexes.Push(index);
-                
-                break;
-            }
-            
-            return result;
+        	var idx = IndexOf(Value);
+        	
+        	if (idx > -1)
+        	{
+        		RemoveAt(idx);
+        		return true;
+        	}
+        	
+        	return false;
         }
         
         /// <summary>
@@ -167,81 +158,209 @@
         /// <returns>true if Object is found.</returns>
         public bool MovePoint(double[] Point, T Value)
         {
-            if (Point.Length != Root.Dimensions)
-                throw new ArgumentException("Point should have same lenght as Tree Dimensions ("+Root.Dimensions+")...", "Point");
+            if (Point.Length != Dimensions)
+            	throw new ArgumentException(string.Format("Point should have same length as Tree Dimensions ({0})...", Dimensions), "Point");
 
-            var result = false;
-            foreach(var index in ValidIndexes.Where(valid => Value.Equals(Data[valid])))
+            var idx = IndexOf(Value);
+            
+            if (idx > -1)
             {
-                result = Root.MovePoint(Point, index);
-                break;
+            	var oldPoint = Points[idx];
+            	Array.Copy(Point, Points[idx], Point.Length);
+            	Root.MovePoint(oldPoint, idx, Points);
+            	return true;
             }
             
-            return result;
+            return false;
         }
         
         /// <summary>
-        /// Get Point Poisition.
+        /// Get Point Position.
         /// </summary>
         /// <param name="Value">Object to Get Position From.</param>
         /// <returns>Position Point or null if not found.</returns>
         public double[] GetPoint(T Value)
         {
-            foreach(var index in ValidIndexes.Where(valid => Value.Equals(Data[valid])))
-            {
-                KDTreeNode node;
-                var foundIndex = Root.GetPointNode(index, out node);
-                return node.Points[foundIndex];
-            }
-            
-            return null;
+        	var idx = IndexOf(Value);
+        	return idx > -1 ? Points[idx] : null;
+        }
+        
+        /// <summary>
+        /// Get Point Poisition At Index.
+        /// </summary>
+        /// <param name="Index">Index to Get Position At.</param>
+        /// <returns>Position Point.</returns>
+        public double[] GetPointAt(int Index)
+        {
+        	if (Index < 0 || Index >= DataSize || AvailableIndices.ContainsValue(Index))
+        		throw new IndexOutOfRangeException(string.Format("Given Index ({0}) is not valued", Index));
+        	
+        	return Points[Index];
         }
         #endregion
         
         #region Private Methods
         /// <summary>
-        /// Resize Data Array to double Size.
+        /// Resize Data Array Increment by Bucket Size * 2.
         /// </summary>
         void ResizeData()
         {
-            Array.Resize<T>(ref Data, Data.Length * 2);
-        }
-        
-        /// <summary>
-        /// Clear the whole Tree.
-        /// </summary>
-        void ClearTree()
-        {
-            Root.Clear();
-            Data = new T[Root.BucketCapacity];
-            NextIndex = 0;
-            AvailableIndexes = new Stack<int>();
+        	var newSize = Data.Length + Root.BucketCapacity * 2;
+            Array.Resize<T>(ref Data, newSize);
+            Array.Resize<double[]>(ref Points, newSize);
         }
         #endregion
         
         #region ICollection Implementation
-        public int Count { get { return Size; } }
-        public bool IsReadOnly { get { return false; } }
-        public void Add(T item) { throw new NotImplementedException(); }
-        public void Clear() { ClearTree(); }
-        public bool Contains(T item) { throw new NotImplementedException(); }
+        public int Count
+        {
+        	get
+        	{
+        		return Root.Size;
+        	}
+        }
+
+        public void Clear()
+        {
+            Root.Clear();
+            Data = new T[Root.BucketCapacity];
+            DataSize = 0;
+            AvailableIndices = new SortedList<int, int>();
+        }
+        public bool Contains(T item)
+        {
+        	return IndexOf(item) > -1;
+        }
         public void CopyTo(T[] array, int arrayIndex)
         {
-            foreach (var idx in ValidIndexes)
-                array[arrayIndex++] = Data[idx];
+        	// Segment Copy from Array Holes
+        	var hole = 0;
+        	
+        	for (int i = AvailableIndices.Count - 1 ; i > -1 ; --i)
+        	{
+        		var nextHole = AvailableIndices.Values[i];
+        		var lengthHole = nextHole - hole;
+        		Array.Copy(Data, hole, array, arrayIndex, lengthHole);
+        		hole = nextHole + 1;
+        		arrayIndex += lengthHole;
+        	}
+        	
+        	Array.Copy(Data, hole, array, arrayIndex, DataSize - hole);
+        }        
+        public bool IsReadOnly
+        {
+        	get
+        	{
+        		return false;
+        	}
         }
-        public bool Remove(T item) { return RemovePoint(item); }
+        public void Add(T item)
+        {
+        	AddPoint(Enumerable.Repeat(0.0, Dimensions).ToArray(), item);
+        }
         #endregion
         
         #region Enumerable Implementation
         public IEnumerator<T> GetEnumerator()
         {
-            return ValidIndexes.Select(index => Data[index]).GetEnumerator();
+        	// Enumerate around Array Holes
+        	var valids = new int[DataSize-AvailableIndices.Count];
+        	var hole = 0;
+        	var idx = 0;
+        	
+        	for (int i = AvailableIndices.Count - 1 ; i > -1 ; --i)
+        	{
+        		var nextHole = AvailableIndices.Values[i];
+        		
+        		while (hole < nextHole)
+        			valids[idx++] = hole++;
+        		
+        		++hole;
+        	}
+        	
+        	while (hole < DataSize)
+        		valids[idx++] = hole++;
+        	
+        	return valids.Select(index => Data[index]).GetEnumerator();
         }
         
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+        #endregion
+        
+        #region IList Implementation
+        public T this[int index]
+        {
+        	get
+        	{
+	        	if (index < 0 || index >= DataSize || AvailableIndices.ContainsValue(index))
+	        		throw new IndexOutOfRangeException(string.Format("Given Index ({0}) is not valued", index));
+	        	
+        		return Data[index];
+        	}
+        	set
+        	{
+        		throw new NotSupportedException();
+        	}
+        }
+        
+        public int IndexOf(T item)
+        {
+        	// Check only Valids Indices
+        	var hole = 0;
+        	for (int i = AvailableIndices.Count - 1 ; i > -1 ; --i)
+        	{
+        		var nextHole = AvailableIndices.Values[i];
+        		
+        		for (int j = hole ; j < nextHole ; ++j)
+        		{
+        			if (Data[j].Equals(item))
+        				return j;
+        		}
+        		
+        		hole = nextHole + 1;
+        	}
+        	
+        	for (int i = hole ; i < DataSize ; ++i)
+        	{
+        		if (Data[i].Equals(item))
+        			return i;
+        	}
+        	
+        	return -1;
+        }
+        
+        public void RemoveAt(int index)
+        {
+        	if (index < 0 || index >= DataSize || AvailableIndices.ContainsValue(index))
+        		throw new IndexOutOfRangeException(string.Format("Given Index ({0}) is not valued", index));
+
+        	Root.RemovePoint(index, Points[index]);
+    		Data[index] = default(T);
+    		Points[index] = null;
+    		
+            // Remove index from valid Indices
+            if (index == DataSize - 1)
+            {
+                --DataSize;
+                // Compact Data Collection
+                while (AvailableIndices.Count > 0 && AvailableIndices.Values[0] == DataSize - 1)
+                {
+                	--DataSize;
+                	AvailableIndices.RemoveAt(0);
+                }
+            }
+            else
+            {
+                AvailableIndices.Add(-index, index);
+            }
+        }
+        
+        public void Insert(int index, T item)
+        {
+        	throw new NotSupportedException();
         }
         #endregion
         
