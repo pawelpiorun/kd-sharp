@@ -138,31 +138,41 @@
         /// <returns>true if Index found and moved.</returns>
         internal bool MovePoint(double[] Point, int Index)
         {
-            // Find the correct leaf node.
-            var pCursor = this;
-            while (!pCursor.IsLeaf)
+            // Find the target leaf node.
+            var cursor = this;
+            var walkPath = new Stack<KDTreeNode>();
+            while (!cursor.IsLeaf)
             {
-                // Extend the size of the leaf.
-                pCursor.ExtendBounds(Point);
-                // Increment Size.
-                ++pCursor.Size;
-
-                pCursor = Point[pCursor.SplitDimension] > pCursor.SplitValue ? pCursor.Right : pCursor.Left;
+                walkPath.Push(cursor);
+                cursor = Point[cursor.SplitDimension] > cursor.SplitValue ? cursor.Right : cursor.Left;
             }
-
-            var foundIndex = Array.IndexOf(pCursor.Data, Index);
             
-            // Found in the same bounds as before, change Existing Point.
+            // Check if Item is in the target node
+            var foundIndex = cursor.IndexOf(Index);
+            
             if (foundIndex > -1)
             {
-                Array.Copy(Point, pCursor.Points[foundIndex], Point.Length);
+                // Extends Bounds
+                while (walkPath.Count > 0)
+                    walkPath.Pop().ExtendBounds(Point);
+                
+                cursor.ExtendBounds(Point);
+                Array.Copy(Point, cursor.Points[foundIndex], Point.Length);
                 return true;
             }
             
-            // Could not be moved, Remove and ReInsert...
+            // Could not be moved inside the same leaf, Remove and ReInsert...
             if (RemovePoint(Index))
             {
-                AddPoint(Point, Index);
+                // Extends Bounds
+                while (walkPath.Count > 0)
+                {
+                    var node = walkPath.Pop();
+                    node.ExtendBounds(Point);
+                    ++node.Size;
+                }
+                
+                cursor.AddLeafPoint(Point, Index);
                 return true;
             }
             
@@ -170,7 +180,7 @@
         }
         
         /// <summary>
-        /// Get the KDTreeNode containing this Data Index and its index.
+        /// Get the KDTreeNode containing this Data Index and its in-node Index.
         /// </summary>
         /// <param name="Index">Data Index to search.</param>
         /// <param name="Node">Node Where Index is found.</param>
@@ -185,18 +195,15 @@
             {
                 var currentNode = nodes.Pop();
                 
-                if (currentNode.IsLeaf)
+                var nodeIndex = currentNode.IndexOf(Index);
+                
+                if (nodeIndex > -1)
                 {
-                    for (int i = 0 ; i < currentNode.Size ; ++i)
-                    {
-                        if (currentNode.Data[i] == Index)
-                        {
-                            Node = currentNode;
-                            return i;
-                        }
-                    }
+                    Node = currentNode;
+                    return nodeIndex;
                 }
-                else
+                
+                if (!currentNode.IsLeaf)
                 {
                     nodes.Push(currentNode.Right);
                     nodes.Push(currentNode.Left);
@@ -206,6 +213,26 @@
             Node = null;
             return -1;
         }
+        
+        /// <summary>
+        /// Get First Index of Data Index-Value in this Node. 
+        /// </summary>
+        /// <param name="Index">Index Value to search.</param>
+        /// <returns>Index position in this node or -1 if not found.</returns>
+        int IndexOf(int Index)
+        {
+            if (!IsLeaf)
+                return -1;
+            
+            for (int i = 0 ; i < Size ; ++i)
+            {
+                if (Data[i] == Index)
+                    return i;
+            }
+            
+            return -1;
+        }
+        
         /// <summary>
         /// Decrement Data Size from this Node.
         /// </summary>
