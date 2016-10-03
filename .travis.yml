@@ -1,0 +1,16 @@
+language: csharp
+solution: KDTree.sln
+sudo: false # Use container-based infrastructure
+
+env:
+  matrix:
+   - XBUILD_TARGET=Debug
+   - XBUILD_TARGET=Release
+
+install:
+ - travis_retry nuget restore KDTest/packages.config -SolutionDirectory ./
+ - travis_retry nuget restore KDVisuals/packages.config -SolutionDirectory ./
+ - travis_retry nuget install NUnit.Console -Version 3.2.1 -OutputDirectory test -ExcludeVersion
+script:
+ - MONO_IOMAP=case xbuild /p:Configuration=$XBUILD_TARGET "KDTree.sln"
+ - mono ./test/NUnit.ConsoleRunner/tools/nunit3-console.exe ./Binaries/KDTest/$XBUILD_TARGET/KDTest.dll
