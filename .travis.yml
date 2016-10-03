@@ -12,5 +12,5 @@ install:
  - travis_retry nuget restore KDVisuals/packages.config -SolutionDirectory ./
  - travis_retry nuget install NUnit.Console -Version 3.2.1 -OutputDirectory test -ExcludeVersion
 script:
- - MONO_IOMAP=case xbuild /p:Configuration=$XBUILD_TARGET "./KDTest/KDTest.csproj" || true
+ - MONO_IOMAP=case xbuild /p:Configuration=$XBUILD_TARGET "./KDTree.sln" || true
  - mono ./test/NUnit.ConsoleRunner/tools/nunit3-console.exe ./Binaries/KDTest/$XBUILD_TARGET/KDTest.dll
