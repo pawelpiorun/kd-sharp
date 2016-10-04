@@ -1,9 +1,9 @@
-﻿namespace KDTree
+﻿namespace KDSharp.KDTree
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using KDTree.DistanceFunctions;
+    using KDSharp.DistanceFunctions;
 
     /// <summary>
     /// A KDTree class represents the root of a variable-dimension KD-Tree.

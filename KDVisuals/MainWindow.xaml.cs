@@ -7,6 +7,8 @@
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
     using System.Timers;
+    using KDSharp.KDTree;
+    using KDSharp.DistanceFunctions;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -20,7 +22,7 @@
         /// <summary>
         /// KD-Tree which stores the points.
         /// </summary>
-        KDTree.KDTree<EllipseWrapper> Tree;
+        KDTree<EllipseWrapper> Tree;
 
         /// <summary>
         /// Bitmap which renders them quickly.
@@ -236,11 +238,11 @@
                 // Regen Tree
                 if (Tree != null && Tree.Dimensions > 2)
                 {
-                    Tree = new KDTree.KDTree<EllipseWrapper>(new KDTree.DistanceFunctions.SquaredEuclideanDistanceWithTranslation(() => DateTime.UtcNow.Ticks, 2), 5);
+                    Tree = new KDTree<EllipseWrapper>(new SquaredEuclideanDistanceWithTranslation(() => DateTime.UtcNow.Ticks, 2), 5);
                 }
                 else
                 {
-                    Tree = new KDTree.KDTree<EllipseWrapper>(2);
+                    Tree = new KDTree<EllipseWrapper>(2);
                 }
                 
                 // Add Point to the tree
@@ -289,7 +291,7 @@
                 if (Tree.Dimensions > 2)
                 {
                     var data = Tree.ToArray();
-                    Tree = new KDTree.KDTree<EllipseWrapper>(2);
+                    Tree = new KDTree<EllipseWrapper>(2);
                     foreach (var item in data)
                     {
                         var elapsed = DateTime.UtcNow.Ticks - item.start;
@@ -300,7 +302,7 @@
                 else
                 {
                     var data = Tree.ToArray();
-                    Tree = new KDTree.KDTree<EllipseWrapper>(new KDTree.DistanceFunctions.SquaredEuclideanDistanceWithTranslation(() => DateTime.UtcNow.Ticks, 2), 5);
+                    Tree = new KDTree<EllipseWrapper>(new SquaredEuclideanDistanceWithTranslation(() => DateTime.UtcNow.Ticks, 2), 5);
                     
                     var rand = new Random();
                     foreach (var item in data)
@@ -322,7 +324,7 @@
         
         void ChangeMovement()
         {
-            KDTree.KDTree<EllipseWrapper> currentTree;
+            KDTree<EllipseWrapper> currentTree;
             EllipseWrapper[] items;
             
             lock (LockSync)

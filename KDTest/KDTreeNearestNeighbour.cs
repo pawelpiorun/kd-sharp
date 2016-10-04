@@ -1,9 +1,9 @@
-﻿namespace KDTest
+﻿namespace KDSharp.KDTest
 {
     using System;
     using System.Linq;
-    using KDTree;
-    using KDTree.DistanceFunctions;
+    using KDSharp.KDTree;
+    using KDSharp.DistanceFunctions;
     using NUnit.Framework;
 
     /// <summary>

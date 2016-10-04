@@ -1,9 +1,9 @@
-﻿namespace KDTest
+﻿namespace KDSharp.KDTest
 {
     using System;
     using System.Linq;
     using NUnit.Framework;
-    using KDTree;
+    using KDSharp.KDTree;
     
     /// <summary>
     /// Interface Test of the KDTree

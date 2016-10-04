@@ -1,9 +1,9 @@
-﻿namespace KDTest
+﻿namespace KDSharp.KDTest
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using KDTree;
+    using KDSharp.KDTree;
     using NUnit.Framework;
     using System.Diagnostics;
     

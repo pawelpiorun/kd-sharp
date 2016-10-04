@@ -1,10 +1,10 @@
-﻿namespace KDTree
+﻿namespace KDSharp.KDTree
 {
     using System;
     using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
-    using KDTree.DistanceFunctions;
+    using KDSharp.DistanceFunctions;
 
     /// <summary>
     /// A NearestNeighbour iterator for the KD-tree which intelligently iterates and captures relevant data in the search space.

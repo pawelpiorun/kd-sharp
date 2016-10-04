@@ -1,4 +1,4 @@
-﻿namespace KDTree.DistanceFunctions
+﻿namespace KDSharp.DistanceFunctions
 {
     using System;
     using System.Linq;

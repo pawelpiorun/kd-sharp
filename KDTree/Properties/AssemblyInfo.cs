@@ -4,12 +4,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("KDTree")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("KDSharp.KDTree")]
+[assembly: AssemblyDescription("KDSharp's KDTree Library")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("KDTree")]
-[assembly: AssemblyCopyright("Copyright ©  2013")]
+[assembly: AssemblyProduct("KDSharp.KDTree")]
+[assembly: AssemblyCopyright("Copyright © DOL Leodagan and contributors 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
