@@ -20,7 +20,9 @@
             <Label Foreground="Gray">|</Label>
             <Button Width="100" Click="Button_Click">Randomise</Button>
             <Label Foreground="Gray">| Randomise Move</Label>
-            <Button Width="100" Click="Move_Click">Move</Button>
+            <Button Name="moveButton" Width="100" Click="Move_Click">Move</Button>
+            <Label Foreground="Gray">| Grid</Label>
+            <Button Name="gridButton" Width="100" Click="Grid_Click">Show</Button>
         </StackPanel>
 
 

@@ -47,12 +47,12 @@
         public NearestNeighbour(KDTree<T> Tree, double[] tSearchPoint, DistanceFunction kDistance, int iMaxPoints, double fThreshold)
         {
             // Check the dimensionality of the search point.
-            if (tSearchPoint.Length != Tree.Root.Dimensions)
+            if (tSearchPoint.Length != Tree.Dimensions)
                 throw new ArgumentException("Dimensionality of search point and kd-tree are not the same.", "tSearchPoint");
 
             // Store the Tree
             this.Tree = Tree;
-            this.pRoot = this.Tree.Root;
+            this.pRoot = this.Tree.RootNode;
             
             // Store the search point.
             this.tSearchPoint = tSearchPoint.ToArray();
@@ -60,7 +60,7 @@
             // Store the point count, distance function and tree root.
             this.iPointsRemaining = Math.Min(iMaxPoints, pRoot.Size);
             this.fThreshold = fThreshold;
-            this.kDistanceFunction = kDistance;            
+            this.kDistanceFunction = kDistance;
             this.iMaxPointsReturned = iMaxPoints;
             this._CurrentDistance = -1;
 
@@ -109,7 +109,7 @@
                     }
 
                     // Calculate the shortest distance between the search point and the min and max bounds of the kd-node.
-                    double fDistance = kDistanceFunction.DistanceToRectangle(tSearchPoint, pNotTaken.MinBound, pNotTaken.MaxBound);
+                    double fDistance = kDistanceFunction.DistanceToRectangle(tSearchPoint, pNotTaken.MinimumBound, pNotTaken.MaximumBound);
 
                     // If it is greater than the threshold, skip.
                     if (fThreshold >= 0 && fDistance > fThreshold)
@@ -161,15 +161,15 @@
                         {
                             // Compute the distance between the points.
                             double fDistance = kDistanceFunction.Distance(Tree.GetPointAt(pCursor[i]), tSearchPoint);
-    
+                            
                             // Skip if it exceeds the threshold.
                             if (fThreshold >= 0 && fDistance > fThreshold)
                                 continue;
-    
+                            
                             // Insert the point if we have more to take.
                             if (pEvaluated.Size < iPointsRemaining)
                                 pEvaluated.Insert(fDistance, Tree[pCursor[i]]);
-    
+                            
                             // Otherwise replace the max.
                             else if (fDistance < pEvaluated.MaxKey)
                                 pEvaluated.ReplaceMax(fDistance, Tree[pCursor[i]]);

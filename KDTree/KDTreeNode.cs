@@ -9,7 +9,7 @@
     /// This node splits based on the largest range of any dimension.
     /// </summary>
     /// <remarks>This is based on this: https://bitbucket.org/rednaxela/knn-benchmark/src/tip/ags/utils/dataStructures/trees/thirdGenKD/ </remarks>
-    sealed class KDTreeNode
+    public sealed class KDTreeNode
     {
         #region Constructors
         public KDTreeNode(int Dimensions, int BucketCapacity)
@@ -33,52 +33,88 @@
         
         #region Internals
         /// <summary>
-        /// Initial Bucket Capacity
+        /// Initial Bucket Capacity.
         /// </summary>
         public readonly int BucketCapacity;
         /// <summary>
-        /// Number of Dimensions
+        /// Number of Dimensions.
         /// </summary>
         public readonly int Dimensions;
         
         /// <summary>
-        /// Number of Items within the Tree 
+        /// Number of Items within the Tree.
         /// </summary>
         public int Size { get; private set; }
         
         /// <summary>
-        /// Array of data indices
+        /// Array of data indices.
         /// </summary>
         int[] DataIndices;
         
         /// <summary>
-        /// Left and Right Children Nodes
+        /// Left and Right Children Nodes.
         /// </summary>
-        public KDTreeNode Left, Right;
+        public KDTreeNode Left { get; private set; }
+        public KDTreeNode Right { get; private set; }
         /// <summary>
-        /// Index of the Split Dimension
+        /// Index of the Split Dimension.
         /// </summary>
-        public int SplitDimension;
+        public int SplitDimension { get; private set; }
         /// <summary>
-        /// Split Value on Split Dimension (larger go into the right, smaller go into left)
+        /// Split Value on Split Dimension (larger go into the right, smaller go into left).
         /// </summary>
-        public double SplitValue;
+        public double SplitValue { get; private set; }
         
         /// <summary>
-        /// Bounding Box for this Node on all Dimensions
+        /// Bounding Box for this Node on all Dimensions.
         /// </summary>
-        public double[] MinBound, MaxBound;
+        double[] MinBound, MaxBound;
+        
+        /// <summary>
+        /// Get Minimum Bound Point.
+        /// </summary>
+        public double[] MinimumBound
+        {
+            get
+            {
+                if (MinBound == null)
+                    return null;
+                
+                var result = new double[MinBound.Length];
+                Array.Copy(MinBound, result, MinBound.Length);
+                return result;
+            }
+        }
+        
+        /// <summary>
+        /// Get Maximum Bound Point.
+        /// </summary>
+        public double[] MaximumBound
+        {
+            get
+            {
+                if (MaxBound == null)
+                    return null;
+                
+                var result = new double[MaxBound.Length];
+                Array.Copy(MaxBound, result, MaxBound.Length);
+                return result;
+            }
+        }
         
         /// <summary>
         /// Is this Node a Single Point ?
         /// </summary>
-        public bool SinglePoint;
+        public bool SinglePoint { get; private set; }
         
         /// <summary>
         /// Is this Node a Leaf ?
         /// </summary>
         public bool IsLeaf { get { return DataIndices != null; } }
         
+        /// <summary>
+        /// Get the Stored Data Index at given Index.
+        /// </summary>
         public int this[int Index]
         {
             get
@@ -191,25 +227,6 @@
         }
         
         /// <summary>
-        /// Get First Index of Data Index-Value in this Node. 
-        /// </summary>
-        /// <param name="Index">Index Value to search.</param>
-        /// <returns>Index position in this node or -1 if not found.</returns>
-        int IndexOf(int Index)
-        {
-            if (!IsLeaf)
-                return -1;
-            
-            for (int i = 0 ; i < Size ; ++i)
-            {
-                if (DataIndices[i] == Index)
-                    return i;
-            }
-            
-            return -1;
-        }
-        
-        /// <summary>
         /// Empty Tree.
         /// </summary>
         internal void Clear()
@@ -231,6 +248,25 @@
         #endregion 
         
         #region Insides
+        /// <summary>
+        /// Get First Index of Data Index-Value in this Node. 
+        /// </summary>
+        /// <param name="Index">Index Value to search.</param>
+        /// <returns>Index position in this node or -1 if not found.</returns>
+        int IndexOf(int Index)
+        {
+            if (!IsLeaf)
+                return -1;
+            
+            for (int i = 0 ; i < Size ; ++i)
+            {
+                if (DataIndices[i] == Index)
+                    return i;
+            }
+            
+            return -1;
+        }
+
         /// <summary>
         /// Extend this node to contain a new point.
         /// </summary>

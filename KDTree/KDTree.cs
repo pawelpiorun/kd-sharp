@@ -38,25 +38,30 @@
         int DataSize;
         
         /// <summary>
-        /// Available Indices for Data Array Holes
+        /// Available Indices for Data Array Holes.
         /// </summary>
         SortedList<int, int> AvailableIndices;
         
         /// <summary>
         /// Tree Root Node.
         /// </summary>
-        internal readonly KDTreeNode Root;
+        readonly KDTreeNode Root;
         
         /// <summary>
-        /// Retrieve the Tree Dimension Count
+        /// Get this Tree Root Node.
+        /// </summary>
+        public KDTreeNode RootNode { get { return Root; } }
+        
+        /// <summary>
+        /// Retrieve the Tree Dimension Count.
         /// </summary>
         public int Dimensions { get { return Root.Dimensions; } }
         
         /// <summary>
-        /// Count of Element Removed From Nodes, High number can lead to Unbalanced Tree
+        /// Count of Element Removed From Nodes, High number can lead to Unbalanced Tree.
         /// </summary>
         public uint RemovalCount { get; private set; }
-                
+        
         /// <summary>
         /// Create a new KD-Tree given a number of dimensions.
         /// </summary>

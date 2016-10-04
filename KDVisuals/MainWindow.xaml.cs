@@ -1,6 +1,7 @@
 ﻿namespace KDVisuals
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Windows;
     using System.Windows.Input;
@@ -15,8 +16,14 @@
     /// </summary>
     public partial class MainWindow : Window
     {
+        /// <summary>
+        /// Timer Resolution for Speed Acceleration.
+        /// </summary>
         const int TimerSecondResolution = 10000000 * 2;
         
+        /// <summary>
+        /// Lock Object for KDTree Editing.
+        /// </summary>
         object LockSync = new object();
         
         /// <summary>
@@ -29,17 +36,40 @@
         /// </summary>
         WriteableBitmap Bitmap;
         
+        /// <summary>
+        /// Number of Neighbours to search.
+        /// </summary>
         int NumNeighbours;
         
+        /// <summary>
+        /// Distance Threshold for Nearest Neighbours.
+        /// </summary>
         double DistThreshold;
         
+        /// <summary>
+        /// Mouse Position used as source point for searches.
+        /// </summary>
         Point MousePosition;
         
+        /// <summary>
+        /// Random Object to extract Points Values
+        /// </summary>
         Random Random = new Random();
         
+        /// <summary>
+        /// Timer Triggering Movement Change
+        /// </summary>
         Timer MoveChange;
         
+        /// <summary>
+        /// Retrieve a Random Speed adjusted for TimerResolution.
+        /// </summary>
         double RandomSpeed { get { return (Random.NextDouble() - 0.5) / TimerSecondResolution; } }
+        
+        /// <summary>
+        /// Enable Grid Drawing.
+        /// </summary>
+        bool GridEnabled;
         
         /// <summary>
         /// A data item which is stored in each kd node.
@@ -95,18 +125,25 @@
         /// On Size Changed Regen Canvas Bitmap
         /// </summary>
         /// <param name="sizeInfo"></param>
-        
         protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
         {
             base.OnRenderSizeChanged(sizeInfo);
             RegenBitmap();
         }
         
+        /// <summary>
+        /// On Render Update, Redraw Tree.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         void OnUpdate(object sender, object e)
         {
             DrawTree();
         }
         
+        /// <summary>
+        /// Recreate Bitmap Image for Drawing.
+        /// </summary>
         void RegenBitmap()
         {
             lock (LockSync)
@@ -125,6 +162,9 @@
             }
         }
         
+        /// <summary>
+        /// Draw Tree Points.
+        /// </summary>
         void DrawTree()
         {
             // Bail if nothing to draw on.
@@ -148,29 +188,12 @@
                     // Clean Up
                     Bitmap.Clear(Colors.LightBlue);
                     
+                    DrawGrid(cnvWidth, cnvHeight);
+                    
                     // Match Neighbours
                     var matched = Tree.Dimensions > 2
                         ? Tree.NearestNeighbors(new [] { MousePosition.X / cnvWidth, MousePosition.Y / cnvHeight, 0.0, 0.0, 0.0 }, NumNeighbours, threshold).ToArray()
                         : Tree.NearestNeighbors(new [] { MousePosition.X / cnvWidth, MousePosition.Y / cnvHeight }, NumNeighbours, threshold).ToArray();
-                    
-                    foreach (var match in matched)
-                    {
-                        var positionX = match.x;
-                        var positionY = match.y;
-                        
-                        if (Tree.Dimensions > 2)
-                        {
-                            var elapsed = DateTime.UtcNow.Ticks - match.start;
-                            positionX += match.speedx * elapsed;
-                            positionY += match.speedy * elapsed;
-                        }
-                        
-                        if (positionX > 1.0 || positionX < 0.0 || positionY > 1.0 || positionY < 0.0)
-                            continue;
-                        
-                        Bitmap.FillEllipse((int)(positionX * cnvWidth - 2), (int)(positionY * cnvHeight - 2), (int)(positionX * cnvWidth + 2), (int)(positionY * cnvHeight + 2), Colors.Red);
-                        Bitmap.DrawEllipse((int)(positionX * cnvWidth - 2), (int)(positionY * cnvHeight - 2), (int)(positionX * cnvWidth + 2), (int)(positionY * cnvHeight + 2), Colors.Green);
-                    }
                     
                     foreach (var nomatch in Tree.Except(matched))
                     {
@@ -190,12 +213,88 @@
                        Bitmap.DrawEllipse((int)(positionX * cnvWidth - 2), (int)(positionY * cnvHeight - 2), (int)(positionX * cnvWidth + 2), (int)(positionY * cnvHeight + 2), Colors.Orange);
                     }
                     
+                    foreach (var match in matched)
+                    {
+                        var positionX = match.x;
+                        var positionY = match.y;
+                        
+                        if (Tree.Dimensions > 2)
+                        {
+                            var elapsed = DateTime.UtcNow.Ticks - match.start;
+                            positionX += match.speedx * elapsed;
+                            positionY += match.speedy * elapsed;
+                        }
+                        
+                        if (positionX > 1.0 || positionX < 0.0 || positionY > 1.0 || positionY < 0.0)
+                            continue;
+                        
+                        Bitmap.FillEllipse((int)(positionX * cnvWidth - 2), (int)(positionY * cnvHeight - 2), (int)(positionX * cnvWidth + 2), (int)(positionY * cnvHeight + 2), Colors.Red);
+                        Bitmap.DrawEllipse((int)(positionX * cnvWidth - 2), (int)(positionY * cnvHeight - 2), (int)(positionX * cnvWidth + 2), (int)(positionY * cnvHeight + 2), Colors.Green);
+                    }
                     // Draw Cursor
                     Bitmap.DrawEllipse((int)(MousePosition.X - DistThreshold), (int)(MousePosition.Y - (DistThreshold / cnvWidth) * cnvHeight), (int)(MousePosition.X + DistThreshold), (int)(MousePosition.Y + (DistThreshold / cnvWidth) * cnvHeight), Colors.Black);
                 }
             }
         }
         
+        /// <summary>
+        /// Draw Tree Grid if Enabled.
+        /// </summary>
+        /// <param name="cnvWidth"></param>
+        /// <param name="cnvHeight"></param>
+        void DrawGrid(double cnvWidth, double cnvHeight)
+        {
+            if (GridEnabled)
+            {
+                var stack = new Stack<KDTreeNode>();
+                stack.Push(Tree.RootNode);
+                var colors = new Color[] { Colors.Purple, Colors.Brown, Colors.Black };
+                var count = 0;
+                while(stack.Count > 0)
+                {
+                    var current = stack.Pop();
+                       var minimumBound = current.MinimumBound;
+                    var maximumBound = current.MaximumBound;
+                    
+                    if (minimumBound != null && maximumBound != null)
+                    {
+                        if (Tree.Dimensions > 2)
+                        {
+                            var elapsedmin = DateTime.UtcNow.Ticks - minimumBound[4];
+                            var minx = (minimumBound[0] + minimumBound[2] * elapsedmin) * cnvWidth;
+                            var miny = (minimumBound[1] + minimumBound[3] * elapsedmin) * cnvHeight;
+                            
+                            var elapsedmax = DateTime.UtcNow.Ticks - maximumBound[4];
+                            var maxx = (maximumBound[0] + maximumBound[2] * elapsedmax) * cnvWidth;
+                            var maxy = (maximumBound[1] + maximumBound[3] * elapsedmax) * cnvHeight;
+                            
+                            Bitmap.DrawRectangle((int)minx, (int)miny, (int)maxx, (int)maxy, colors[count%colors.Length]);
+                        }
+                        else
+                        {
+                            var minx = minimumBound[0] * cnvWidth;
+                            var miny = minimumBound[1] * cnvHeight;
+                            var maxx = maximumBound[0] * cnvWidth;
+                            var maxy = maximumBound[1] * cnvHeight;
+                            
+                            Bitmap.DrawRectangle((int)minx, (int)miny, (int)maxx, (int)maxy, colors[count%colors.Length]);
+                        }
+                    }
+                    
+                    if (!current.IsLeaf)
+                    {
+                        stack.Push(current.Right);
+                        stack.Push(current.Left);
+                    }
+                    
+                    ++count;
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Gather UI Values for Nearest Neighbours Searches.
+        /// </summary>
         void RegenUIValues()
         {
             txtFindMax.Foreground = Brushes.Black;
@@ -298,6 +397,7 @@
                         var nomove = new EllipseWrapper(item.x + item.speedx * elapsed, item.y + item.speedy * elapsed);
                         Tree.AddPoint(new [] { nomove.x, nomove.y }, nomove);
                     }
+                    moveButton.Content = "Move";
                 }
                 else
                 {
@@ -318,10 +418,15 @@
                     MoveChange.Elapsed += (object sndr, ElapsedEventArgs ev) => ChangeMovement();
                     MoveChange.Interval = 1000;
                     MoveChange.Start();
+                    
+                    moveButton.Content = "Stop";
                 }
             }
         }
         
+        /// <summary>
+        /// Update Points Movements Periodically.
+        /// </summary>
         void ChangeMovement()
         {
             KDTree<EllipseWrapper> currentTree;
@@ -375,6 +480,18 @@
             }
         }
 
+        /// <summary>
+        /// Capture Grid Show Click Events.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void Grid_Click(object sender, RoutedEventArgs e)
+        {
+            GridEnabled = !GridEnabled;
+            
+            gridButton.Content = GridEnabled ? "Hide" : "Show";
+        }
+        
         /// <summary>
         /// When the mouse is moved, highlight the nearby nodes.
         /// </summary>
