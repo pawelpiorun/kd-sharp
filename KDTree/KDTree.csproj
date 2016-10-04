@@ -55,7 +55,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DistanceFunctions\DistanceFunction.cs" />
+    <Compile Include="DistanceFunctions\IDistanceFunction.cs" />
     <Compile Include="DistanceFunctions\SquaredEuclideanDistanceFunction.cs" />
     <Compile Include="DistanceFunctions\SquaredEuclideanDistanceWithTranslation.cs" />
     <Compile Include="IntervalHeap.cs" />

@@ -16,7 +16,7 @@
         /// <summary>The point from which are searching in n-dimensional space.</summary>
         private double[] tSearchPoint;
         /// <summary>A distance function which is used to compare nodes and value positions.</summary>
-        private DistanceFunction kDistanceFunction;
+        private IDistanceFunction kDistanceFunction;
         /// <summary>The tree nodes which have yet to be evaluated.</summary>
         private MinHeap<KDTreeNode> pPending;
         /// <summary>The values which have been evaluated and selected.</summary>
@@ -44,7 +44,7 @@
         /// <param name="kDistance">The distance function used to evaluate the points.</param>
         /// <param name="iMaxPoints">The max number of points which can be returned by this iterator.  Capped to max in tree.</param>
         /// <param name="fThreshold">Threshold to apply to the search space.  Negative numbers indicate that no threshold is applied.</param>
-        public NearestNeighbour(KDTree<T> Tree, double[] tSearchPoint, DistanceFunction kDistance, int iMaxPoints, double fThreshold)
+        public NearestNeighbour(KDTree<T> Tree, double[] tSearchPoint, IDistanceFunction kDistance, int iMaxPoints, double fThreshold)
         {
             // Check the dimensionality of the search point.
             if (tSearchPoint.Length != Tree.Dimensions)

@@ -20,7 +20,7 @@
         /// <summary>
         /// Distance Implementation for default Nearest Neighbour Search.
         /// </summary>
-        DistanceFunction DistanceFunction { get; set; }
+        IDistanceFunction DistanceFunction { get; set; }
         
         /// <summary>
         /// Objects Stored in the Tree.
@@ -86,7 +86,7 @@
         /// </summary>
         /// <param name="DistanceFunction">The Default Distance Function to use for NearestNeighbours.</param>
         /// <param name="iDimensions">The number of data sorting dimensions. i.e. 3 for a 3D point.</param>
-        public KDTree(DistanceFunction DistanceFunction, int iDimensions)
+        public KDTree(IDistanceFunction DistanceFunction, int iDimensions)
             : this(DistanceFunction, iDimensions, DEFAULT_BUCKET_CAPACITY)
         {
         }
@@ -97,7 +97,7 @@
         /// <param name="DistanceFunction">The Default Distance Function to use for NearestNeighbours.</param>
         /// <param name="iDimensions">The number of data sorting dimensions. i.e. 3 for a 3D point.</param>
         /// <param name="iBucketCapacity">The default number of items that can be stored in each node.</param>
-        public KDTree(DistanceFunction DistanceFunction, int iDimensions, int iBucketCapacity)
+        public KDTree(IDistanceFunction DistanceFunction, int iDimensions, int iBucketCapacity)
         {
             this.DistanceFunction = DistanceFunction;
             this.Data = new T[iBucketCapacity];
@@ -435,7 +435,7 @@
         /// <param name="kDistanceFunction">The distance function to use.</param>
         /// <param name="fDistance">A threshold distance to apply.  Optional.  Negative values mean that it is not applied.</param>
         /// <returns>A new nearest neighbour iterator with the given parameters.</returns>
-        public NearestNeighbour<T> NearestNeighbors(DistanceFunction kDistanceFunction, double[] tSearchPoint, int iMaxReturned, double fDistance)
+        public NearestNeighbour<T> NearestNeighbors(IDistanceFunction kDistanceFunction, double[] tSearchPoint, int iMaxReturned, double fDistance)
         {
             return new NearestNeighbour<T>(this, tSearchPoint, kDistanceFunction, iMaxReturned, fDistance);
         }
