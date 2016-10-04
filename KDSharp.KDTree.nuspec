@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package>
+    <metadata minClientVersion="2.8">
+        <id>KDSharp.KDTree</id>
+        <version>0.0.1</version>
+        <authors>DOL Leodagan, asheepcalledgeorge, rednaxela</authors>
+        <description>A Simple .NET Implementation of a KDTree for Nearest Neighbours searches with performances in mind.</description>
+		<summary>Implement N-Dimensions Tree as a Flat Indexed Collection. Supports Item's position modifications at the cost of unbalancing nodes. Provides squared euclidean distance calculation and translation speed vector calculation for moving objects.</summary>
+        <language>en-US</language>
+        <licenseUrl>https://github.com/dol-leodagan/kd-sharp/blob/master/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/dol-leodagan/kd-sharp</projectUrl>
+        <tags>kdtree kd-tree binary search tree bsp bst spatial</tags>
+    </metadata>
+    <files>
+        <file src="Binaries\KDTree\Release\KDTree.dll" target="lib\net35" />
+        <file src="Binaries\KDTree\Release\KDTree.pdb" target="lib\net35" />
+  </files>
+</package>
