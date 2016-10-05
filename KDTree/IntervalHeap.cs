@@ -14,17 +14,17 @@
         /// <summary>
         /// The default size for a new interval heap.
         /// </summary>
-        private const int DEFAULT_SIZE = 64;
+        public const int DEFAULT_SIZE = 64;
 
         /// <summary>
         /// The internal data array which contains the stored objects.
         /// </summary>
-        private T[] tData;
+        T[] Data;
 
         /// <summary>
         /// The array of keys which 
         /// </summary>
-        private double[] tKeys;
+        double[] Keys;
 
         /// <summary>
         /// Construct a new interval heap with the default capacity.
@@ -39,8 +39,8 @@
         /// <param name="capacity"></param>
         public IntervalHeap(int capacity)
         {
-            this.tData = new T[capacity];
-            this.tKeys = new double[capacity];
+            this.Data = new T[capacity];
+            this.Keys = new double[capacity];
             this.Capacity = capacity;
             this.Size = 0;
         }
@@ -63,8 +63,8 @@
             get
             {
                 if (Size == 0)
-                    throw new Exception();
-                return tData[0];
+                    throw new InvalidOperationException("Collection contains no elements");
+                return Data[0];
             }
         }
 
@@ -76,15 +76,9 @@
             get
             {
                 if (Size == 0)
-                {
-                    throw new Exception();
-                }
-                else if (Size == 1)
-                {
-                    return tData[0];
-                }
-
-                return tData[1];
+                    throw new InvalidOperationException("Collection contains no elements");
+                
+                return Size == 1 ? Data[0] : Data[1];
             }
         }
 
@@ -96,8 +90,9 @@
             get
             {
                 if (Size == 0)
-                    throw new Exception();
-                return tKeys[0];
+                    throw new InvalidOperationException("Collection contains no elements");
+                
+                return Keys[0];
             }
         }
 
@@ -109,15 +104,9 @@
             get
             {
                 if (Size == 0)
-                {
-                    throw new Exception();
-                }
-                else if (Size == 1)
-                {
-                    return tKeys[0];
-                }
-
-                return tKeys[1];
+                    throw new InvalidOperationException("Collection contains no elements");
+                
+                return Size == 1 ? Keys[0] : Keys[1];
             }
         }
 
@@ -136,19 +125,19 @@
 
                 // Expand the data array.
                 var newData = new T[Capacity];
-                Array.Copy(tData, newData, tData.Length);
-                tData = newData;
+                Array.Copy(Data, newData, Data.Length);
+                Data = newData;
 
                 // Expand the key array.
                 var newKeys = new double[Capacity];
-                Array.Copy(tKeys, newKeys, tKeys.Length);
-                tKeys = newKeys;
+                Array.Copy(Keys, newKeys, Keys.Length);
+                Keys = newKeys;
             }
 
             // Insert the new value at the end.
             Size++;
-            tData[Size-1] = value;
-            tKeys[Size-1] = key;
+            Data[Size-1] = value;
+            Keys[Size-1] = key;
 
             // Ensure it is in the right place.
             SiftInsertedValueUp();
@@ -161,13 +150,13 @@
         {
             // Check for errors.
             if (Size == 0)
-                throw new Exception();
+                throw new InvalidOperationException("Collection contains no elements");
 
             // Remove the item by 
             Size--;
-            tData[0] = tData[Size];
-            tKeys[0] = tKeys[Size];
-            tData[Size] = default(T);
+            Data[0] = Data[Size];
+            Keys[0] = Keys[Size];
+            Data[Size] = default(T);
             SiftDownMin(0);
         }
 
@@ -180,17 +169,17 @@
         {
             // Check for errors.
             if (Size == 0)
-                throw new Exception();
+                throw new InvalidOperationException("Collection contains no elements");
 
             // Add the data.
-            tData[0] = value;
-            tKeys[0] = key;
+            Data[0] = value;
+            Keys[0] = key;
 
             // If we have more than one item.
             if (Size > 1)
             {
                 // Swap with pair if necessary.
-                if (tKeys[1] < key)
+                if (Keys[1] < key)
                     Swap(0, 1);
                 SiftDownMin(0);
             }
@@ -203,12 +192,10 @@
         {
             // If we have no items in the queue.
             if (Size == 0)
-            {
-                throw new Exception();
-            }
+                throw new InvalidOperationException("Collection contains no elements");
 
             // If we have one item, remove the min.
-            else if (Size == 1)
+            if (Size == 1)
             {
                 RemoveMin();
                 return;
@@ -216,9 +203,9 @@
 
             // Remove the max.
             Size--;
-            tData[1] = tData[Size];
-            tKeys[1] = tKeys[Size];
-            tData[Size] = default(T);
+            Data[1] = Data[Size];
+            Keys[1] = Keys[Size];
+            Data[Size] = default(T);
             SiftDownMax(1);
         }
 
@@ -230,19 +217,19 @@
         public void ReplaceMax(double key, T value)
         {
             if (Size == 0)
-            {
-                throw new Exception();
-            }
-            else if (Size == 1)
+                throw new InvalidOperationException("Collection contains no elements");
+            
+            if (Size == 1)
             {
                 ReplaceMin(key, value);
                 return;
             }
 
-            tData[1] = value;
-            tKeys[1] = key;
+            Data[1] = value;
+            Keys[1] = key;
             // Swap with pair if necessary
-            if (key < tKeys[0]) {
+            if (key < Keys[0])
+            {
                 Swap(0, 1);
             }
             SiftDownMax(1);
@@ -256,17 +243,17 @@
         /// <param name="x">The first index.</param>
         /// <param name="y">The second index.</param>
         /// <returns>The second index.</returns>
-        private int Swap(int x, int y)
+        int Swap(int x, int y)
         {
             // Store temp.
-            T yData = tData[y];
-            double yDist = tKeys[y];
+            T data = Data[y];
+            double dist = Keys[y];
 
             // Swap
-            tData[y] = tData[x];
-            tKeys[y] = tKeys[x];
-            tData[x] = yData;
-            tKeys[x] = yDist;
+            Data[y] = Data[x];
+            Keys[y] = Keys[x];
+            Data[x] = data;
+            Keys[x] = dist;
 
             // Return.
             return y;
@@ -287,33 +274,31 @@
         /// <summary>
         /// Place a newly inserted element a into the correct tree position.
         /// </summary>
-        private void SiftInsertedValueUp()
+        void SiftInsertedValueUp()
         {
             // Work out where the element was inserted.
             int u = Size-1;
 
-            // If it is the only element, nothing to do.
             if (u == 0)
             {
+                // If it is the only element, nothing to do.
             }
-
-            // If it is the second element, sort with it's pair.
             else if (u == 1)
             {
+                // If it is the second element, sort with it's pair.
                 // Swap if less than paired item.
-                if  (tKeys[u] < tKeys[u-1])
+                if  (Keys[u] < Keys[u-1])
                     Swap(u, u-1);
             }
-
-            // If it is on the max side, 
             else if (u % 2 == 1)
             {
+                // If it is on the max side, 
                 // Already paired. Ensure pair is ordered right
                 int p = (u/2-1)|1; // The larger value of the parent pair
-                if  (tKeys[u] < tKeys[u-1])
+                if  (Keys[u] < Keys[u-1])
                 { // If less than it's pair
                     u = Swap(u, u-1); // Swap with it's pair
-                    if (tKeys[u] < tKeys[p-1])
+                    if (Keys[u] < Keys[p-1])
                     { // If smaller than smaller parent pair
                         // Swap into min-heap side
                         u = Swap(u, p-1);
@@ -322,7 +307,7 @@
                 }
                 else
                 {
-                    if (tKeys[u] > tKeys[p])
+                    if (Keys[u] > Keys[p])
                     { // If larger that larger parent pair
                         // Swap into max-heap side
                         u = Swap(u, p);
@@ -333,15 +318,18 @@
             else
             {
                 // Inserted in the lower-value slot without a partner
-                int p = (u/2-1)|1; // The larger value of the parent pair
-                if (tKeys[u] > tKeys[p])
-                { // If larger that larger parent pair
+                // The larger value of the parent pair
+                int p = (u/2-1)|1;
+                if (Keys[u] > Keys[p])
+                {
+                    // If larger that larger parent pair
                     // Swap into max-heap side
                     u = Swap(u, p);
                     SiftUpMax(u);
                 }
-                else if (tKeys[u] < tKeys[p-1])
-                { // If smaller than smaller parent pair
+                else if (Keys[u] < Keys[p-1])
+                {
+                    // If smaller than smaller parent pair
                     // Swap into min-heap side
                     u = Swap(u, p-1);
                     SiftUpMin(u);
@@ -352,57 +340,57 @@
         /// <summary>
         /// Bubble elements up the min side of the tree.
         /// </summary>
-        /// <param name="iChild">The child index.</param>
-        private void SiftUpMin(int iChild)
+        /// <param name="Child">The child index.</param>
+        void SiftUpMin(int Child)
         {
             // Min-side parent: (x/2-1)&~1
-            for (int iParent = (iChild/2-1)&~1; 
-                iParent >= 0 && tKeys[iChild] < tKeys[iParent]; 
-                iChild = iParent, iParent = (iChild/2-1)&~1)
+            for (int Parent = (Child/2-1)&~1; 
+                Parent >= 0 && Keys[Child] < Keys[Parent]; 
+                Child = Parent, Parent = (Child/2-1)&~1)
             {
-                Swap(iChild, iParent);
+                Swap(Child, Parent);
             }
         }
 
         /// <summary>
         /// Bubble elements up the max side of the tree.
         /// </summary>
-        /// <param name="iChild">The child index.</param>
-        private void SiftUpMax(int iChild)
+        /// <param name="Child">The child index.</param>
+        void SiftUpMax(int Child)
         {
             // Max-side parent: (x/2-1)|1
-            for (int iParent = (iChild/2-1)|1; 
-                iParent >= 0 && tKeys[iChild] > tKeys[iParent]; 
-                iChild = iParent, iParent = (iChild/2-1)|1)
+            for (int Parent = (Child/2-1)|1; 
+                Parent >= 0 && Keys[Child] > Keys[Parent]; 
+                Child = Parent, Parent = (Child/2-1)|1)
             {
-                Swap(iChild, iParent);
+                Swap(Child, Parent);
             }
         }
 
         /// <summary>
         /// Bubble elements down the min side of the tree.
         /// </summary>
-        /// <param name="iParent">The parent index.</param>
-        private void SiftDownMin(int iParent)
+        /// <param name="Parent">The parent index.</param>
+        void SiftDownMin(int Parent)
         {
             // For each child of the parent.
-            for (int iChild = iParent * 2 + 2; iChild < Size; iParent = iChild, iChild = iParent * 2 + 2)
+            for (int Child = Parent * 2 + 2; Child < Size; Parent = Child, Child = Parent * 2 + 2)
             {
                 // If the next child is less than the current child, select the next one.
-                if (iChild + 2 < Size && tKeys[iChild + 2] < tKeys[iChild])
+                if (Child + 2 < Size && Keys[Child + 2] < Keys[Child])
                 {
-                    iChild += 2;
+                    Child += 2;
                 }
 
                 // If it is less than our parent swap.
-                if (tKeys[iChild] < tKeys[iParent])
+                if (Keys[Child] < Keys[Parent])
                 {
-                    Swap(iParent, iChild);
+                    Swap(Parent, Child);
 
                     // Swap the pair if necessary.
-                    if (iChild+1 < Size && tKeys[iChild+1] < tKeys[iChild])
+                    if (Child+1 < Size && Keys[Child+1] < Keys[Child])
                     {
-                        Swap(iChild, iChild+1);
+                        Swap(Child, Child+1);
                     }
                 }
                 else
@@ -415,50 +403,49 @@
         /// <summary>
         /// Bubble elements down the max side of the tree.
         /// </summary>
-        /// <param name="iParent"></param>
-        private void SiftDownMax(int iParent)
+        /// <param name="Parent"></param>
+        void SiftDownMax(int Parent)
         {
             // For each child on the max side of the tree.
-            for (int iChild = iParent * 2 + 1; iChild <= Size; iParent = iChild, iChild = iParent * 2 + 1)
+            for (int Child = Parent * 2 + 1; Child <= Size; Parent = Child, Child = Parent * 2 + 1)
             {
                 // If the child is the last one (and only has half a pair).
-                if (iChild == Size)
+                if (Child == Size)
                 {
                     // CHeck if we need to swap with th parent.
-                    if (tKeys[iChild - 1] > tKeys[iParent])
-                        Swap(iParent, iChild - 1);
+                    if (Keys[Child - 1] > Keys[Parent])
+                        Swap(Parent, Child - 1);
                     break;
                 }
 
                 // If there is only room for a right child lower pair.
-                else if (iChild + 2 == Size)
+                if (Child + 2 == Size)
                 {
                     // Swap the children.
-                    if (tKeys[iChild + 1] > tKeys[iChild])
+                    if (Keys[Child + 1] > Keys[Child])
                     {
                         // Swap with the parent.
-                        if (tKeys[iChild + 1] > tKeys[iParent])
-                           Swap(iParent, iChild + 1);
+                        if (Keys[Child + 1] > Keys[Parent])
+                           Swap(Parent, Child + 1);
                         break;
                     }
                 }
-
-                // 
-                else if (iChild + 2 < Size)
+                else if (Child + 2 < Size)
                 {
                     // If there is room for a right child upper pair
-                    if (tKeys[iChild + 2] > tKeys[iChild])
+                    if (Keys[Child + 2] > Keys[Child])
                     {
-                        iChild += 2;
+                        Child += 2;
                     }
                 }
-                if (tKeys[iChild] > tKeys[iParent])
+                
+                if (Keys[Child] > Keys[Parent])
                 {
-                    Swap(iParent, iChild);
+                    Swap(Parent, Child);
                     // Swap with pair if necessary
-                    if (tKeys[iChild-1] > tKeys[iChild])
+                    if (Keys[Child-1] > Keys[Child])
                     {
-                        Swap(iChild, iChild-1);
+                        Swap(Child, Child-1);
                     }
                 }
                 else

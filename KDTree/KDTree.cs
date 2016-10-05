@@ -65,44 +65,44 @@
         /// <summary>
         /// Create a new KD-Tree given a number of dimensions.
         /// </summary>
-        /// <param name="iDimensions">The number of data sorting dimensions. i.e. 3 for a 3D point.</param>
-        public KDTree(int iDimensions)
-            : this(new SquaredEuclideanDistanceFunction(), iDimensions, DEFAULT_BUCKET_CAPACITY)
+        /// <param name="Dimensions">The number of data sorting dimensions. i.e. 3 for a 3D point.</param>
+        public KDTree(int Dimensions)
+            : this(new SquaredEuclideanDistanceFunction(), Dimensions, DEFAULT_BUCKET_CAPACITY)
         {
         }
 
         /// <summary>
         /// Create a new KD-Tree given a number of dimensions and initial bucket capacity.
         /// </summary>
-        /// <param name="iDimensions">The number of data sorting dimensions. i.e. 3 for a 3D point.</param>
-        /// <param name="iBucketCapacity">The default number of items that can be stored in each node.</param>
-        public KDTree(int iDimensions, int iBucketCapacity)
-            : this(new SquaredEuclideanDistanceFunction(), iDimensions, iBucketCapacity)
+        /// <param name="Dimensions">The number of data sorting dimensions. i.e. 3 for a 3D point.</param>
+        /// <param name="BucketCapacity">The default number of items that can be stored in each node.</param>
+        public KDTree(int Dimensions, int BucketCapacity)
+            : this(new SquaredEuclideanDistanceFunction(), Dimensions, BucketCapacity)
         {
         }
         
         /// <summary>
-        /// Create a new instance of <see cref="KDTree{T}"/> given a number of dimensions and a <see cref="DistanceFunctions.DistanceFunction"/>.
+        /// Create a new instance of <see cref="KDTree{T}"/> given a number of dimensions and a <see cref="DistanceFunctions.IDistanceFunction"/>.
         /// </summary>
         /// <param name="DistanceFunction">The Default Distance Function to use for NearestNeighbours.</param>
-        /// <param name="iDimensions">The number of data sorting dimensions. i.e. 3 for a 3D point.</param>
-        public KDTree(IDistanceFunction DistanceFunction, int iDimensions)
-            : this(DistanceFunction, iDimensions, DEFAULT_BUCKET_CAPACITY)
+        /// <param name="Dimensions">The number of data sorting dimensions. i.e. 3 for a 3D point.</param>
+        public KDTree(IDistanceFunction DistanceFunction, int Dimensions)
+            : this(DistanceFunction, Dimensions, DEFAULT_BUCKET_CAPACITY)
         {
         }
         
         /// <summary>
-        /// Create a new instance of <see cref="KDTree{T}"/> given a number of dimensions, an initial bucket capacity and a <see cref="DistanceFunctions.DistanceFunction"/>.
+        /// Create a new instance of <see cref="KDTree{T}"/> given a number of dimensions, an initial bucket capacity and a <see cref="DistanceFunctions.IDistanceFunction"/>.
         /// </summary>
         /// <param name="DistanceFunction">The Default Distance Function to use for NearestNeighbours.</param>
-        /// <param name="iDimensions">The number of data sorting dimensions. i.e. 3 for a 3D point.</param>
-        /// <param name="iBucketCapacity">The default number of items that can be stored in each node.</param>
-        public KDTree(IDistanceFunction DistanceFunction, int iDimensions, int iBucketCapacity)
+        /// <param name="Dimensions">The number of data sorting dimensions. i.e. 3 for a 3D point.</param>
+        /// <param name="BucketCapacity">The default number of items that can be stored in each node.</param>
+        public KDTree(IDistanceFunction DistanceFunction, int Dimensions, int BucketCapacity)
         {
             this.DistanceFunction = DistanceFunction;
-            this.Data = new T[iBucketCapacity];
-            this.Points = new double[iBucketCapacity][];
-            this.Root = new KDTreeNode(iDimensions, iBucketCapacity);
+            this.Data = new T[BucketCapacity];
+            this.Points = new double[BucketCapacity][];
+            this.Root = new KDTreeNode(Dimensions, BucketCapacity);
             this.DataSize = 0;
             this.AvailableIndices = new SortedList<int, int>();
         }
@@ -418,26 +418,26 @@
         /// <summary>
         /// Get the nearest neighbours to a point in the kd tree using a square euclidean distance function.
         /// </summary>
-        /// <param name="tSearchPoint">The point of interest.</param>
-        /// <param name="iMaxReturned">The maximum number of points which can be returned by the iterator.</param>
-        /// <param name="fDistance">A threshold distance to apply.  Optional.  Negative values mean that it is not applied.</param>
+        /// <param name="SearchPoint">The point of interest.</param>
+        /// <param name="MaxReturned">The maximum number of points which can be returned by the iterator.</param>
+        /// <param name="Distance">A threshold distance to apply.  Optional.  Negative values mean that it is not applied.</param>
         /// <returns>A new nearest neighbour iterator with the given parameters.</returns>
-        public NearestNeighbour<T> NearestNeighbors(double[] tSearchPoint, int iMaxReturned, double fDistance = -1)
+        public NearestNeighbour<T> NearestNeighbors(double[] SearchPoint, int MaxReturned, double Distance = -1)
         {
-            return NearestNeighbors(DistanceFunction, tSearchPoint, iMaxReturned, fDistance);
+            return NearestNeighbors(DistanceFunction, SearchPoint, MaxReturned, Distance);
         }
 
         /// <summary>
         /// Get the nearest neighbours to a point in the kd tree using a user defined distance function.
         /// </summary>
-        /// <param name="tSearchPoint">The point of interest.</param>
-        /// <param name="iMaxReturned">The maximum number of points which can be returned by the iterator.</param>
-        /// <param name="kDistanceFunction">The distance function to use.</param>
-        /// <param name="fDistance">A threshold distance to apply.  Optional.  Negative values mean that it is not applied.</param>
+        /// <param name="DistanceFunction">The distance function to use.</param>
+        /// <param name="SearchPoint">The point of interest.</param>
+        /// <param name="MaxReturned">The maximum number of points which can be returned by the iterator.</param>
+        /// <param name="Distance">A threshold distance to apply.  Optional.  Negative values mean that it is not applied.</param>
         /// <returns>A new nearest neighbour iterator with the given parameters.</returns>
-        public NearestNeighbour<T> NearestNeighbors(IDistanceFunction kDistanceFunction, double[] tSearchPoint, int iMaxReturned, double fDistance)
+        public NearestNeighbour<T> NearestNeighbors(IDistanceFunction DistanceFunction, double[] SearchPoint, int MaxReturned, double Distance)
         {
-            return new NearestNeighbour<T>(this, tSearchPoint, kDistanceFunction, iMaxReturned, fDistance);
+            return new NearestNeighbour<T>(this, SearchPoint, DistanceFunction, MaxReturned, Distance);
         }
         #endregion
     }

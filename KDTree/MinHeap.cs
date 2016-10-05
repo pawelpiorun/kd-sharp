@@ -7,22 +7,22 @@
     /// </summary>
     /// <typeparam name="T">The type of data this MinHeap stores.</typeparam>
     /// <remarks>This is based on this: https://bitbucket.org/rednaxela/knn-benchmark/src/tip/ags/utils/dataStructures/trees/thirdGenKD/ </remarks>
-    public class MinHeap<T>
+    public sealed class MinHeap<T>
     {
         /// <summary>
         /// The default size for a min heap.
         /// </summary>
-        private const int DEFAULT_SIZE = 64;
+        public const int DEFAULT_SIZE = 64;
 
         /// <summary>
         /// The data array.  This stores the data items in the heap.
         /// </summary>
-        private T[] tData;
+        T[] Data;
 
         /// <summary>
         /// The key array.  This determines how items are ordered. Smallest first.
         /// </summary>
-        private double[] tKeys;
+        double[] Keys;
 
         /// <summary>
         /// Create a new min heap with the default capacity.
@@ -37,8 +37,8 @@
         /// <param name="iCapacity"></param>
         public MinHeap(int iCapacity)
         {
-            this.tData = new T[iCapacity];
-            this.tKeys = new double[iCapacity];
+            this.Data = new T[iCapacity];
+            this.Keys = new double[iCapacity];
             this.Capacity = iCapacity;
             this.Size = 0;
         }
@@ -68,18 +68,18 @@
 
                 // Copy the data array.
                 var newData = new T[Capacity];
-                Array.Copy(tData, newData, tData.Length);
-                tData = newData;
+                Array.Copy(Data, newData, Data.Length);
+                Data = newData;
 
                 // Copy the key array.
                 var newKeys = new double[Capacity];
-                Array.Copy(tKeys, newKeys, tKeys.Length);
-                tKeys = newKeys;
+                Array.Copy(Keys, newKeys, Keys.Length);
+                Keys = newKeys;
             }
 
             // Insert new value at the end
-            tData[Size] = value;
-            tKeys[Size] = key;
+            Data[Size] = value;
+            Keys[Size] = key;
             SiftUp(Size);
             Size++;
         }
@@ -90,13 +90,13 @@
         public T RemoveMin()
         {
             if (Size == 0)
-                throw new Exception();
+                throw new InvalidOperationException("Collection contains no elements");
 
             Size--;
-            var min = tData[0];
-            tData[0] = tData[Size];
-            tKeys[0] = tKeys[Size];
-            tData[Size] = default(T);
+            var min = Data[0];
+            Data[0] = Data[Size];
+            Keys[0] = Keys[Size];
+            Data[Size] = default(T);
             SiftDown(0);
             
             return min;
@@ -110,9 +110,9 @@
             get
             {
                 if (Size == 0)
-                    throw new Exception();
+                    throw new InvalidOperationException("Collection contains no elements");
 
-                return tData[0];
+                return Data[0];
             }
         }
 
@@ -124,64 +124,63 @@
             get
             {
                 if (Size == 0)
-                    throw new Exception();
+                    throw new InvalidOperationException("Collection contains no elements");
 
-                return tKeys[0];
+                return Keys[0];
             }
         }
 
         /// <summary>
         /// Bubble a child item up the tree.
         /// </summary>
-        /// <param name="iChild"></param>
-        private void SiftUp(int iChild)
+        /// <param name="Child"></param>
+        void SiftUp(int Child)
         {
             // For each parent above the child, if the parent is smaller then bubble it up.
-            for (int iParent = (iChild - 1) / 2; 
-                iChild != 0 && tKeys[iChild] < tKeys[iParent]; 
-                iChild = iParent, iParent = (iChild - 1) / 2)
+            for (int Parent = (Child - 1) / 2; 
+                Child != 0 && Keys[Child] < Keys[Parent]; 
+                Child = Parent, Parent = (Child - 1) / 2)
             {
-                T kData = tData[iParent];
-                double dDist = tKeys[iParent];
+                T kData = Data[Parent];
+                double dDist = Keys[Parent];
 
-                tData[iParent] = tData[iChild];
-                tKeys[iParent] = tKeys[iChild];
+                Data[Parent] = Data[Child];
+                Keys[Parent] = Keys[Child];
 
-                tData[iChild] = kData;
-                tKeys[iChild] = dDist;
+                Data[Child] = kData;
+                Keys[Child] = dDist;
             }
         }
 
         /// <summary>
         /// Bubble a parent down through the children so it goes in the right place.
         /// </summary>
-        /// <param name="iParent">The index of the parent.</param>
-        private void SiftDown(int iParent)
+        /// <param name="Parent">The index of the parent.</param>
+        void SiftDown(int Parent)
         {
             // For each child.
-            for (int iChild = iParent * 2 + 1; iChild < Size; iParent = iChild, iChild = iParent * 2 + 1)
+            for (int Child = Parent * 2 + 1; Child < Size; Parent = Child, Child = Parent * 2 + 1)
             {
                 // If the child is larger, select the next child.
-                if (iChild + 1 < Size && tKeys[iChild] > tKeys[iChild + 1])
-                    iChild++;
+                if (Child + 1 < Size && Keys[Child] > Keys[Child + 1])
+                    Child++;
 
                 // If the parent is larger than the largest child, swap.
-                if (tKeys[iParent] > tKeys[iChild])
+                if (Keys[Parent] > Keys[Child])
                 {
                     // Swap the points
-                    T pData = tData[iParent];
-                    double pDist = tKeys[iParent];
+                    T pData = Data[Parent];
+                    double pDist = Keys[Parent];
 
-                    tData[iParent] = tData[iChild];
-                    tKeys[iParent] = tKeys[iChild];
+                    Data[Parent] = Data[Child];
+                    Keys[Parent] = Keys[Child];
 
-                    tData[iChild] = pData;
-                    tKeys[iChild] = pDist;
+                    Data[Child] = pData;
+                    Keys[Child] = pDist;
                 }
-
-                // TODO: REMOVE THE BREAK
                 else
                 {
+                    // TODO: REMOVE THE BREAK
                     break;
                 }
             }
