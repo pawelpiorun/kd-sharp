@@ -305,7 +305,7 @@
         }
         public void Add(T item)
         {
-            AddPoint(Enumerable.Repeat(0.0, Dimensions).ToArray(), item);
+            AddPoint(Enumerable.Repeat(default(double), Dimensions).ToArray(), item);
         }
         #endregion
         

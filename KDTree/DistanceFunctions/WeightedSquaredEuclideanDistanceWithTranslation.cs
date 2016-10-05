@@ -1,16 +1,16 @@
-﻿namespace KDSharp.DistanceFunctions
+﻿namespace KDTree.DistanceFunctions
 {
-    using System;
-    
+	using System;
+	
     /// <summary>
-    /// A distance function for our KD-Tree which returns squared euclidean distances with translation movement.
+    /// A distance function for our KD-Tree which returns squared euclidean distances with translation movement and weight ratio.
     /// Vector Array Storage
     /// - Position : [0..Dimensions-1]
     /// - Translation Vector : [Dimensions..Dimensions*2-1] (Length is speed in unit/timeunit)
     /// - Start Time : [Dimensions*2]
     /// </summary>
-    public sealed class SquaredEuclideanDistanceWithTranslation : IDistanceFunction
-    {
+	public sealed class WeightedSquaredEuclideanDistanceWithTranslation
+	{
     	/// <summary>
     	/// Get Current Time Tick.
     	/// </summary>
@@ -18,23 +18,34 @@
         /// <summary>
         /// Size of Position/Translation Vector.
         /// </summary>
-        int Dimensions { get; set; }
-        
+        int Dimensions { get; set; }        
 		/// <summary>
-        /// Create a new Instance of <see cref="SquaredEuclideanDistanceWithTranslation"/>.
+		/// Weight Ratio for each dimensions.
+		/// </summary>
+		readonly double[] Weights;
+
+		/// <summary>
+        /// Create a new Instance of <see cref="WeightedSquaredEuclideanDistanceWithTranslation"/> with given weights ratio.
         /// </summary>
         /// <param name="GetTime">GetTime Function to retrieve Translated Position.</param>
         /// <param name="Dimensions">Number of Dimensions for Position and Movement Vector.</param>
-        public SquaredEuclideanDistanceWithTranslation(Func<double> GetTime, int Dimensions)
+        /// <param name="Weights">Weights Ratio Array for each Dimensions.</param>
+        public WeightedSquaredEuclideanDistanceWithTranslation(Func<double> GetTime, int Dimensions, double[] Weights)
         {
         	if (GetTime == null)
         		throw new ArgumentNullException("GetTime");
         	if (Dimensions < 1)
         		throw new ArgumentException("Dimensions count must be at least 1.", "Dimensions");
-        	
-            this.GetTime = GetTime;
+        	if (Weights == null)
+        		throw new ArgumentNullException("Weights");
+        	if (Weights.Length != Dimensions)
+        		throw new ArgumentException("Weights Length must be the same as Dimensions count.", "Weights");
+
+        	this.GetTime = GetTime;
             this.Dimensions = Dimensions;
-       }
+ 			this.Weights = new double[Weights.Length];
+			Array.Copy(Weights, this.Weights, this.Weights.Length);
+        }
         
         /// <summary>
         /// Find the squared distance between two n-dimensional points with translation vector.
@@ -60,7 +71,7 @@
             double sum = 0;
             for (int i = 0; i < Dimensions; ++i)
             {
-                double difference = (position1[i] - position2[i]);
+            	double difference = (position1[i] - position2[i]) * Weights[i];
                 sum += difference * difference;
             }
             return sum;
@@ -97,12 +108,12 @@
             {
                 difference = 0;
                 if (pos[i] > posmax[i])
-                    difference = (pos[i] - posmax[i]);
+                    difference = (pos[i] - posmax[i]) * Weights[i];
                 else if (pos[i] < posmin[i])
-                    difference = (pos[i] - posmin[i]);
+                    difference = (pos[i] - posmin[i]) * Weights[i];
                 sum += difference * difference;
             }
             return sum;
         }
-    }
+	}
 }

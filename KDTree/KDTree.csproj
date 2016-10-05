@@ -58,6 +58,8 @@
     <Compile Include="DistanceFunctions\IDistanceFunction.cs" />
     <Compile Include="DistanceFunctions\SquaredEuclideanDistanceFunction.cs" />
     <Compile Include="DistanceFunctions\SquaredEuclideanDistanceWithTranslation.cs" />
+    <Compile Include="DistanceFunctions\WeightedSquaredEuclideanDistanceFunction.cs" />
+    <Compile Include="DistanceFunctions\WeightedSquaredEuclideanDistanceWithTranslation.cs" />
     <Compile Include="IntervalHeap.cs" />
     <Compile Include="KDTree.cs" />
     <Compile Include="KDTreeNode.cs" />
