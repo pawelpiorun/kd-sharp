@@ -205,65 +205,7 @@
             CollectionAssert.AreEqual(new [] { default(double), default(double), default(double) }, tree.GetPoint(1));
         }
         #endregion
-        
-        #region Element Remove
-        [Test]
-        public void RemoveElement_EmptyTree_NotRemoved()
-        {
-            var tree = new KDTree<int>(1, 2);
-            
-            Assert.IsFalse(tree.Remove(1));
-            Assert.AreEqual(0, tree.Count);
-        }
-        
-        [Test]
-        public void RemoveElement_OneElement_Removed()
-        {
-            var tree = new KDTree<int>(1, 2);
-            
-            tree.AddPoint(new [] { 0.0 }, 1);
-            
-            Assert.IsTrue(tree.Remove(1));
-            Assert.AreEqual(0, tree.Count);
-        }
-        
-        [Test]
-        public void RemoveElement_OneElement_NotRemoved()
-        {
-            var tree = new KDTree<int>(1, 2);
-            
-            tree.AddPoint(new [] { 0.0 }, 1);
-            
-            Assert.IsFalse(tree.Remove(2));
-            Assert.AreEqual(1, tree.Count);
-        }
-        
-        [Test]
-        public void RemoveElement_TenElement_Removed()
-        {
-            var tree = new KDTree<int>(3, 2);
-            
-            for (int i = 0 ; i < 10 ; i++)
-                tree.AddPoint(new [] { 0.0, 0.0, 0.0 }, 0);
-            
-            tree.Remove(0);
-            
-            Assert.AreEqual(9, tree.Count);
-        }
-        
-        [Test]
-        public void RemoveElement_TenElement_NotRemoved()
-        {
-            var tree = new KDTree<int>(3, 2);
-            
-            for (int i = 0 ; i < 10 ; i++)
-                tree.AddPoint(new [] { 0.0, 0.0, 0.0 }, 0);
-            
-            Assert.IsFalse(tree.Remove(1));
-            Assert.AreEqual(10, tree.Count);
-        }
-        #endregion
-        
+                
         #region Clear
         [Test]
         public void ClearTree_EmptyTree_IsEmpty()
@@ -488,6 +430,100 @@
         }
         #endregion
         
+        #region GetPointAt
+        [Test]
+        public void GetPointAt_EmptyTree_Exception()
+        {
+            var tree = new KDTree<int>(1);
+            
+            Assert.Throws(typeof(ArgumentOutOfRangeException), () => tree.GetPointAt(0));
+        }
+        
+        [Test]
+        public void GetPointAt_OutOfRange_Exception()
+        {
+            var tree = new KDTree<int>(1);
+            
+            tree.Add(1);
+            
+            Assert.Throws(typeof(ArgumentOutOfRangeException), () => tree.GetPointAt(1));
+        }
+        
+        [Test]
+        public void GetPointAt_OneElement_DefaultPoint()
+        {
+            var tree = new KDTree<int>(1);
+            
+            tree.Add(1);
+            
+            var point = tree.GetPointAt(0);
+            
+            CollectionAssert.AreEquivalent(new [] { default(double) }, point);
+        }
+        
+        [Test]
+        public void GetPointAt_ManyElements_ExpectedPointValue()
+        {
+            var tree = new KDTree<int>(1);
+            
+            for (int i = 10 ; i < 20 ; ++i)
+                tree.AddPoint(new [] { (double)i }, i);
+            
+            var point = tree.GetPointAt(5);
+            
+            CollectionAssert.AreEquivalent(new [] { (double)15 }, point);
+        }
+        #endregion
+        
+        #region IndexOf
+        [Test]
+        public void IndexOf_EmptyTree_Negative()
+        {
+            var tree = new KDTree<int>(1);
+            
+            var idx = tree.IndexOf(0);
+            
+            Assert.LessOrEqual(idx, -1);
+        }
+        
+        [Test]
+        public void IndexOf_OneElement_Negative()
+        {
+            var tree = new KDTree<int>(1);
+            
+            tree.Add(1);
+            
+            var idx = tree.IndexOf(0);
+            
+            Assert.LessOrEqual(idx, -1);
+        }
+        
+        [Test]
+        public void IndexOf_OneElement_FirstIndex()
+        {
+            var tree = new KDTree<int>(1);
+            
+            tree.Add(1);
+            
+            var idx = tree.IndexOf(1);
+            
+            Assert.AreEqual(0, idx);
+        }
+        
+        [Test]
+        public void IndexOf_ManyElements_ExpectedIndex()
+        {
+            var tree = new KDTree<int>(1);
+            
+            for (int i = 10 ; i < 20 ; ++i)
+                tree.AddPoint(new [] { (double)i }, i);
+            
+            var idx = tree.IndexOf(15);
+            
+            Assert.AreEqual(5, idx);
+        }
+        #endregion
+        
         #region Element Move
         [Test]
         public void MoveElement_EmptyTree_NotMoved()
@@ -550,6 +586,237 @@
             
             CollectionAssert.AreEquivalent(new [] { 3.0, 3.0, 3.0 }, tree.GetPoint(3));
             Assert.AreEqual(21, tree.Count);
+        }
+        #endregion
+        
+        #region Regen
+        [Test]
+        public void Regen_EmptyTree_NoElement()
+        {
+            var tree = new KDTree<int>(1);
+            
+            tree.Regen();
+            
+            CollectionAssert.IsEmpty(tree);
+        }
+        
+        [Test]
+        public void Regen_OneElement_CollectionEquivalent()
+        {
+            var tree = new KDTree<int>(1);
+            
+            tree.Add(1);
+            
+            tree.Regen();
+            
+            CollectionAssert.AreEquivalent(new [] { 1 }, tree);
+        }
+        
+        [Test]
+        public void Regen_ManyElements_CollectionEquivalent()
+        {
+            var tree = new KDTree<int>(3, 2);
+            
+            for (int i = 0 ; i < 10 ; i++)
+                tree.AddPoint(new [] { 0.0, 0.0, 0.0 }, 0);
+            
+            tree.Regen();
+            
+            CollectionAssert.AreEquivalent(Enumerable.Repeat(0, 10), tree);
+        }
+        
+        [Test]
+        public void Regen_WithRemoves_CollectionEquivalent()
+        {
+            var tree = new KDTree<int>(3, 2);
+            
+            for (int i = 0 ; i < 10 ; i++)
+                tree.AddPoint(new [] { 0.0, 0.0, 0.0 }, i);
+            
+            tree.RemoveAt(0);
+            tree.RemoveAt(9);
+            
+            Assert.AreEqual(tree.RemovalCount, 2);
+            
+            tree.Regen();
+            
+            Assert.AreEqual(tree.RemovalCount, 0);
+            
+            CollectionAssert.AreEquivalent(Enumerable.Range(1, 8), tree);
+        }
+        #endregion
+        
+        #region Element Remove
+        [Test]
+        public void RemoveElement_EmptyTree_NotRemoved()
+        {
+            var tree = new KDTree<int>(1, 2);
+            
+            Assert.IsFalse(tree.Remove(1));
+            Assert.AreEqual(0, tree.RemovalCount);
+            Assert.AreEqual(0, tree.Count);
+        }
+        
+        [Test]
+        public void RemoveElement_OneElement_Removed()
+        {
+            var tree = new KDTree<int>(1, 2);
+            
+            tree.AddPoint(new [] { 0.0 }, 1);
+            
+            Assert.IsTrue(tree.Remove(1));
+            Assert.AreEqual(1, tree.RemovalCount);
+            Assert.AreEqual(0, tree.Count);
+        }
+        
+        [Test]
+        public void RemoveElement_OneElement_NotRemoved()
+        {
+            var tree = new KDTree<int>(1, 2);
+            
+            tree.AddPoint(new [] { 0.0 }, 1);
+            
+            Assert.IsFalse(tree.Remove(2));
+            Assert.AreEqual(0, tree.RemovalCount);
+            Assert.AreEqual(1, tree.Count);
+        }
+        
+        [Test]
+        public void RemoveElement_TenElement_Removed()
+        {
+            var tree = new KDTree<int>(3, 2);
+            
+            for (int i = 0 ; i < 10 ; i++)
+                tree.AddPoint(new [] { 0.0, 0.0, 0.0 }, 0);
+            
+            tree.Remove(0);
+            Assert.AreEqual(1, tree.RemovalCount);
+            Assert.AreEqual(9, tree.Count);
+        }
+        
+        [Test]
+        public void RemoveElement_TenElement_NotRemoved()
+        {
+            var tree = new KDTree<int>(3, 2);
+            
+            for (int i = 0 ; i < 10 ; i++)
+                tree.AddPoint(new [] { 0.0, 0.0, 0.0 }, 0);
+            
+            Assert.IsFalse(tree.Remove(1));
+            Assert.AreEqual(10, tree.Count);
+        }
+        #endregion
+        
+        #region RemoveAt
+        [Test]
+        public void RemoveAt_EmptyTree_Exception()
+        {
+            var tree = new KDTree<int>(1, 2);
+            
+            Assert.Throws(typeof(ArgumentOutOfRangeException), () => tree.RemoveAt(0));
+            Assert.AreEqual(0, tree.RemovalCount);
+        }
+
+        [Test]
+        public void RemoveAt_OneElement_Exception()
+        {
+            var tree = new KDTree<int>(1, 2);
+            
+            tree.Add(1);
+            
+            Assert.Throws(typeof(ArgumentOutOfRangeException), () => tree.RemoveAt(1));
+            Assert.AreEqual(0, tree.RemovalCount);
+        }
+        
+        [Test]
+        public void RemoveAt_OneElement_Empty()
+        {
+            var tree = new KDTree<int>(1, 2);
+            
+            tree.Add(1);
+            
+            tree.RemoveAt(0);
+            
+            Assert.AreEqual(1, tree.RemovalCount);
+            CollectionAssert.IsEmpty(tree);
+        }
+        
+        [Test]
+        public void RemoveAt_ManyElements_CollectionEquivalent()
+        {
+            var tree = new KDTree<int>(3, 2);
+            
+            for (int i = 0 ; i < 10 ; i++)
+                tree.AddPoint(new [] { 0.0, 0.0, 0.0 }, i);
+            
+            tree.RemoveAt(0);
+            tree.RemoveAt(9);
+            
+            Assert.AreEqual(tree.RemovalCount, 2);
+            CollectionAssert.AreEquivalent(Enumerable.Range(1, 8), tree);
+        }
+        #endregion
+        
+        #region Indexer
+        [Test]
+        public void Indexer_EmptyTree_Exception()
+        {
+            var tree = new KDTree<int>(1);
+            
+            int item;
+            
+            Assert.Throws(typeof(ArgumentOutOfRangeException), () => item = tree[0]);
+        }
+
+        [Test]
+        public void Indexer_OneElement_Exception()
+        {
+            var tree = new KDTree<int>(1);
+            
+            tree.Add(0);
+            
+            int item;
+            Assert.Throws(typeof(ArgumentOutOfRangeException), () => item = tree[1]);
+        }
+        
+        [Test]
+        public void Indexer_OneElementWithRemove_Exception()
+        {
+            var tree = new KDTree<int>(1);
+            
+            tree.Add(0);
+            tree.Add(1);
+            
+            tree.RemoveAt(0);
+            
+            tree.Add(2);
+            
+            int item;
+            Assert.Throws(typeof(ArgumentOutOfRangeException), () => item = tree[2]);
+        }
+        
+        [Test]
+        public void Indexer_OneElement_Retrieved()
+        {
+            var tree = new KDTree<int>(1);
+            
+            tree.Add(1);
+            
+            Assert.AreEqual(1, tree[0]);
+        }
+        
+        [Test]
+        public void Indexer_ManyElementsWithRemove_CollectionEquivalent()
+        {
+            var tree = new KDTree<int>(3, 2);
+            
+            for (int i = 0 ; i < 10 ; i++)
+                tree.AddPoint(new [] { 0.0, 0.0, 0.0 }, i);
+            
+            tree.RemoveAt(0);
+            tree.RemoveAt(9);
+            
+            CollectionAssert.AreEquivalent(Enumerable.Range(1, 8).Select(idx => tree[idx]), tree);
         }
         #endregion
     }

@@ -212,10 +212,11 @@
         /// </summary>
         /// <param name="Index">Index to Get Position At.</param>
         /// <returns>Position Point.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">Index does not match a recorded item.</exception>
         public double[] GetPointAt(int Index)
         {
             if (Index < 0 || Index >= DataSize || AvailableIndices.ContainsValue(Index))
-                throw new IndexOutOfRangeException(string.Format("Given Index ({0}) is not valued", Index));
+                throw new ArgumentOutOfRangeException("Index", string.Format("Given Index ({0}) is not valued", Index));
             
             var result = new double[Dimensions];
             Array.Copy(Points[Index], result, Dimensions);
@@ -345,7 +346,7 @@
             get
             {
                 if (index < 0 || index >= DataSize || AvailableIndices.ContainsValue(index))
-                    throw new IndexOutOfRangeException(string.Format("Given Index ({0}) is not valued", index));
+                    throw new ArgumentOutOfRangeException("index", string.Format("Given Index ({0}) is not valued", index));
                 
                 return Data[index];
             }
@@ -384,7 +385,7 @@
         public void RemoveAt(int index)
         {
             if (index < 0 || index >= DataSize || AvailableIndices.ContainsValue(index))
-                throw new IndexOutOfRangeException(string.Format("Given Index ({0}) is not valued", index));
+                throw new ArgumentOutOfRangeException("index", string.Format("Given Index ({0}) is not valued", index));
 
             Root.RemovePoint(index, Points[index]);
             Data[index] = default(T);
