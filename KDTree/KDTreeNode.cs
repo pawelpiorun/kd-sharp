@@ -120,7 +120,9 @@
             get
             {
                 if (Index < 0 || Index >= Size)
-                    throw new IndexOutOfRangeException(string.Format("Given Index ({0}) out of Range (0..{1})", Index, Size - 1));
+                    throw new ArgumentOutOfRangeException("Index", string.Format("Given Index ({0}) out of Range (0..{1})", Index, Size - 1));
+                if (!IsLeaf)
+                    throw new NotSupportedException("Item can only be retrieved from Leaf Nodes.");
                 
                 return DataIndices[Index];
             }

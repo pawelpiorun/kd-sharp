@@ -53,6 +53,7 @@
     <Compile Include="KDTreeBenchmark.cs" />
     <Compile Include="KDTreeInterface.cs" />
     <Compile Include="KDTreeNearestNeighbour.cs" />
+    <Compile Include="KDTreeNodeTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
