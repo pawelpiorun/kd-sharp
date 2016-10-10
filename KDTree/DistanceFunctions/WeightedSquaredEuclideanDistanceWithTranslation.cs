@@ -1,4 +1,4 @@
-﻿namespace KDTree.DistanceFunctions
+﻿namespace KDSharp.DistanceFunctions
 {
 	using System;
 	
@@ -9,7 +9,7 @@
     /// - Translation Vector : [Dimensions..Dimensions*2-1] (Length is speed in unit/timeunit)
     /// - Start Time : [Dimensions*2]
     /// </summary>
-	public sealed class WeightedSquaredEuclideanDistanceWithTranslation
+    public sealed class WeightedSquaredEuclideanDistanceWithTranslation : IDistanceFunction
 	{
     	/// <summary>
     	/// Get Current Time Tick.
