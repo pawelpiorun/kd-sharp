@@ -52,6 +52,10 @@ after_build:
 
 - cmd: 7z a -tzip KDSharp_KDTree_%CONFIGURATION%.zip %APPVEYOR_BUILD_FOLDER%\Binaries\KDVisuals\%CONFIGURATION%\*
 
+after_test:
+
+- cmd: nuget pack KDSharp.KDTree.nuspec -Version {version}
+
 artifacts:
 
 - path: '*.zip'
