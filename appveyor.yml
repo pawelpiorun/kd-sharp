@@ -54,13 +54,17 @@ after_build:
 
 after_test:
 
-- cmd: nuget pack KDSharp.KDTree.nuspec -Version %APPVEYOR_BUILD_VERSION%
+- cmd: IF %CONFIGURATION%==Release nuget pack KDSharp.KDTree.nuspec -Version %APPVEYOR_BUILD_VERSION%
 
 artifacts:
 
 - path: '*.zip'
 
   name: Release
+
+- path: '*.nupkg'
+
+  name: NugetPkg
 
 deploy:
 
@@ -78,4 +82,4 @@ deploy:
 
     secure: pBc32QLczL5ibKZV6sdmtp7EydaZ+dJiTGC5LH769eMMjfYSxb7NfnOjqOiJCNI7
 
-  artifact: /.*\.nupkg/
+  artifact: NugetPkg
