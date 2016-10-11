@@ -68,8 +68,6 @@ deploy:
 
   artifact: Release
   
-deploy:
-
 - provider: NuGet
 
   api_key:
