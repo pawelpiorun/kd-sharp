@@ -4,6 +4,8 @@ Simple C# implementation of a kd-tree. Automatically exported from code.google.c
 The Google Code repository says this is MIT licensed code, copyright is with the original author (asheepcalledgeorge).
 
 # Current Build Status
+Nuget : [![NuGet](https://img.shields.io/nuget/v/KDSharp.KDTree.svg?maxAge=2592000)](https://www.nuget.org/packages/KDSharp.KDTree/)
+
 Appveyor : [![Build status](https://ci.appveyor.com/api/projects/status/o7pdd64mp3avui0u?svg=true)](https://ci.appveyor.com/project/dol-leodagan/kd-sharp)
 
 Travis : [![Build Status](https://travis-ci.org/dol-leodagan/kd-sharp.svg?branch=master)](https://travis-ci.org/dol-leodagan/kd-sharp)
