@@ -68,3 +68,12 @@ deploy:
 
   artifact: Release
   
+deploy:
+
+- provider: NuGet
+
+  api_key:
+
+    secure: pBc32QLczL5ibKZV6sdmtp7EydaZ+dJiTGC5LH769eMMjfYSxb7NfnOjqOiJCNI7
+
+  artifact: /.*\.nupkg/
