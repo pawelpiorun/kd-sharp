@@ -275,7 +275,7 @@
             Root.Clear();
             Data = new T[Root.BucketCapacity];
             DataSize = 0;
-            AvailableIndices = new SortedList<int, int>();
+            AvailableIndices.Clear();
         }
         public bool Contains(T item)
         {
