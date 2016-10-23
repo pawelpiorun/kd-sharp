@@ -40,7 +40,7 @@
         /// <summary>
         /// Available Indices for Data Array Holes.
         /// </summary>
-        SortedList<int, int> AvailableIndices;
+        readonly SortedList<int, int> AvailableIndices;
         
         /// <summary>
         /// Tree Root Node.
