@@ -232,20 +232,30 @@
             Root.Clear();
             RemovalCount = 0;
             
-            var hole = 0;
-            for (int i = AvailableIndices.Count - 1 ; i > -1 ; --i)
+            // Compact Inner Array
+            foreach (var index in AvailableIndices.Values)
             {
-                var nextHole = AvailableIndices.Values[i];
-                
-                while (hole < nextHole)
-                    Root.AddPoint(hole++, Points);
-                
-                ++hole;
+                --DataSize;
+                Data[index] = Data[DataSize];
+                Points[index] = Points[DataSize];
             }
             
-            while (hole < DataSize)
-                Root.AddPoint(hole++, Points);
+            AvailableIndices.Clear();
             
+            for (int i = 0 ; i < DataSize ; i++)
+                Root.AddPoint(i, Points);
+        }
+        
+        /// <summary>
+        /// Sets internal arrays capacity to the actual number of elements in the <see cref="KDTree{T}"/>, if that number is less than 90 percent of current capacity.
+        /// </summary>
+        public void TrimExcess()
+        {
+            if (DataSize < Data.Length * 0.9)
+            {
+                Array.Resize<T>(ref Data, DataSize);
+                Array.Resize<double[]>(ref Points, DataSize);
+            }
         }
         #endregion
         
@@ -274,6 +284,7 @@
         {
             Root.Clear();
             Data = new T[Root.BucketCapacity];
+            Points = new double[Root.BucketCapacity][];
             DataSize = 0;
             AvailableIndices.Clear();
         }
