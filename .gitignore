@@ -1,3 +1,7 @@
 packages
 Binaries
 *.nupkg
+/.vs/KDTree
+/KDTest/obj
+/KDTree/obj
+/KDVisuals/obj
