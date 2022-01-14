@@ -1,12 +1,13 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
-# SharpDevelop 5.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KDTree", "KDTree\KDTree.csproj", "{33A00A90-C02E-474B-A8C0-3B0559873EA0}"
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32002.261
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KDTree", "KDTree\KDTree.csproj", "{33A00A90-C02E-474B-A8C0-3B0559873EA0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KDVisuals", "KDVisuals\KDVisuals.csproj", "{733B51F3-EE33-4AC2-B552-73F554816640}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KDVisuals", "KDVisuals\KDVisuals.csproj", "{733B51F3-EE33-4AC2-B552-73F554816640}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KDTest", "KDTest\KDTest.csproj", "{35241834-7222-4CC8-B9A8-B9056F48D491}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KDTest", "KDTest\KDTest.csproj", "{35241834-7222-4CC8-B9A8-B9056F48D491}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,18 +17,21 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{33A00A90-C02E-474B-A8C0-3B0559873EA0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{33A00A90-C02E-474B-A8C0-3B0559873EA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{33A00A90-C02E-474B-A8C0-3B0559873EA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{33A00A90-C02E-474B-A8C0-3B0559873EA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33A00A90-C02E-474B-A8C0-3B0559873EA0}.Release|Any CPU.ActiveCfg = Release|x86
+		{33A00A90-C02E-474B-A8C0-3B0559873EA0}.Release|Any CPU.Build.0 = Release|x86
 		{733B51F3-EE33-4AC2-B552-73F554816640}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{733B51F3-EE33-4AC2-B552-73F554816640}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{733B51F3-EE33-4AC2-B552-73F554816640}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{733B51F3-EE33-4AC2-B552-73F554816640}.Release|Any CPU.Build.0 = Release|Any CPU
+		{733B51F3-EE33-4AC2-B552-73F554816640}.Release|Any CPU.ActiveCfg = Release|x86
+		{733B51F3-EE33-4AC2-B552-73F554816640}.Release|Any CPU.Build.0 = Release|x86
 		{35241834-7222-4CC8-B9A8-B9056F48D491}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{35241834-7222-4CC8-B9A8-B9056F48D491}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{35241834-7222-4CC8-B9A8-B9056F48D491}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{35241834-7222-4CC8-B9A8-B9056F48D491}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35241834-7222-4CC8-B9A8-B9056F48D491}.Release|Any CPU.ActiveCfg = Release|x86
+		{35241834-7222-4CC8-B9A8-B9056F48D491}.Release|Any CPU.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7F019CC1-80A7-4D70-867A-C128859447FC}
 	EndGlobalSection
 EndGlobal
